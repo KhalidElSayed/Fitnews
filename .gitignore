@@ -1,0 +1,8 @@
+.sw
+*~
+*.DS_Store
+*.class
+*java#
+*.settings
+fitnews/bin/
+fitnews/bin/
