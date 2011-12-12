@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello World, FitnewsActivity!</string>
+    <string name="app_name">Fit news</string>
+    <string name="message_to_empty_fit_list">No information was found about</string>
+    <string name="error_rest_full_service">Error getting data from internet, Try later</string>
+
+</resources>
