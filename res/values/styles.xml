@@ -4,6 +4,7 @@
     <style name="lab_tags_fit_news">
         <item name="android:textSize">8sp</item>
         <item name="android:textColor">@color/red</item>
+        <item name="android:height">16dp</item>
     </style>
 
     <style name="lab_title_fit_news">

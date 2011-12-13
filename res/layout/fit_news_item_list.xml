@@ -1,47 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"      
-    android:background="@drawable/fit_item_list_selector">
+    android:layout_height="80dp"
+    android:background="@drawable/fit_item_list_selector" >
 
     <ImageView
         android:id="@+id/img_new_item_list_fit"
-        android:layout_width="wrap_content"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignTop="@+id/lab_detail_item_list_fit"
-        android:layout_marginBottom="3dp"
-        android:layout_centerVertical="true"      
+        android:padding="1dp"
+        android:focusable="true"
         android:src="@drawable/no_data" />
 
     <TextView
         android:id="@+id/lab_title_item_list_fit"
         style="@style/lab_title_fit_news"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/img_new_item_list_fit"
+        android:padding="1dp"
         android:gravity="center"
         android:text="titulo" />
-
+
     <TextView
         android:id="@+id/lab_detail_item_list_fit"
         style="@style/lab_detail_fit_news"
-        android:layout_width="360dp"
-        android:layout_height="30dp"
-        android:layout_alignLeft="@+id/lab_title_item_list_fit"
-        android:layout_alignParentRight="true"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/lab_title_item_list_fit"
+        android:layout_toRightOf="@+id/img_new_item_list_fit"
         android:gravity="fill|right"
+        android:padding="1dp"
         android:text="detalle" />
 
     <LinearLayout
         android:id="@+id/tags_panel"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/lab_detail_item_list_fit"
-        android:layout_alignBottom="@+id/img_new_item_list_fit"
+        android:layout_height="wrap_content"      
+        android:layout_toRightOf="@+id/img_new_item_list_fit"
+        android:layout_below="@+id/lab_detail_item_list_fit"
+        android:layout_alignParentBottom="true"
+        android:padding="1dp"
         android:gravity="right"
         android:orientation="horizontal" >
     </LinearLayout>

@@ -1,0 +1,48 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/fit_item_list_selector"
+    android:weightSum="1" >
+
+    <ImageView
+        android:id="@+id/img_new_item_list_fit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_weight="0.25"
+        android:src="@drawable/no_data" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.75"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/lab_title_item_list_fit"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.075"
+            style="@style/lab_title_fit_news"
+            android:text="Titulo" />
+
+        <TextView
+            android:id="@+id/lab_detail_item_list_fit"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.525"
+            style="@style/lab_detail_fit_news"
+            android:text="TextView" />
+
+        <LinearLayout
+            android:id="@+id/tags_panel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" 
+            android:layout_weight="0.15"
+            android:layout_gravity="right">
+            
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
