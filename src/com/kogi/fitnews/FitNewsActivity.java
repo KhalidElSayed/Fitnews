@@ -8,6 +8,7 @@ import com.kogi.model.FitItem;
 import com.kogi.util.DecoderImages;
 import com.kogi.ws.ConsumerWebServices;
 
+import android.app.Activity;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -15,7 +16,9 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.test.UiThreadTest;
 import android.text.Html;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -38,15 +41,15 @@ public class FitNewsActivity extends ListActivity {
 		private LayoutInflater mInflater;
 		private Context mContext;
 		private ArrayList<FitItem> mFitItems;
-		private Display mDisplay;
+		private DisplayMetrics mDisplayMetrics;
 
 		public EfficientAdapter(Context context, ArrayList<FitItem> fitItems) {
 			mInflater = LayoutInflater.from(context);
 			mContext = context;
 			mFitItems = fitItems;
-			mDisplay = ((WindowManager) context
-					.getSystemService(Context.WINDOW_SERVICE))
-					.getDefaultDisplay();
+			mDisplayMetrics = new DisplayMetrics();
+			((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
+					.getDefaultDisplay().getMetrics(mDisplayMetrics);
 		}
 
 		public int getCount() {
@@ -116,7 +119,7 @@ public class FitNewsActivity extends ListActivity {
 					 */
 
 					Bitmap bitmapResized = DecoderImages.getBitmapReSize(
-							bitmap, 165);
+							bitmap, 120);
 					holder.imgNews.setImageBitmap(bitmapResized);
 					holder.imgNews.setAdjustViewBounds(true);
 				}
@@ -132,6 +135,8 @@ public class FitNewsActivity extends ListActivity {
 
 			for (int i = 0; continuar && i < tags.size(); i++) {
 				Button butTag = new Button(mContext);
+				butTag.setTextColor(R.color.red);
+				// butTag.setTextSize(12 * mDisplayMetrics.density);
 				butTag.setTextAppearance(mContext, R.style.lab_tags_fit_news);
 
 				if (i < 2) {
@@ -146,8 +151,14 @@ public class FitNewsActivity extends ListActivity {
 				 * LayoutParams.WRAP_CONTENT, 40));
 				 */
 				// TODO set up to 20% the tags panel according screen size
-				Log.v("screen size", "x= " + mDisplay.getWidth() + " y= " + mDisplay.getHeight());
-				holder.tagsPanel.addView(butTag, i);
+				/*
+				 * Log.e("screen size", "x= " + mDisplayMetrics.widthPixels +
+				 * " y= " + mDisplayMetrics.heightPixels + "density " +
+				 * mDisplayMetrics.density);
+				 */
+				holder.tagsPanel.addView(butTag, i, new LayoutParams(
+						LayoutParams.WRAP_CONTENT,
+						(int) (28 * mDisplayMetrics.density)));
 
 			}
 			return convertView;
@@ -197,10 +208,10 @@ public class FitNewsActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.fit_news_list);
 
+		mFitNewsActivity = this;
+
 		mTextSearch = (TextView) findViewById(R.id.txt_search);
-		mTextSearch.clearFocus();
 		mImgSearchAction = (ImageView) findViewById(R.id.img_search_action);
-		mImgSearchAction.requestFocus();
 
 		mProgressDialog = new ProgressDialog(FitNewsActivity.this);
 		mProgressDialog.setMessage("Searching news on the web...");
@@ -210,23 +221,30 @@ public class FitNewsActivity extends ListActivity {
 		mProgressDialog.show();
 
 		// TODO manage the request service by time
+		// TODO uses internet manager to detect the network state
 		new Thread(new Runnable() {
-			// TODO build a service component
+
 			@Override
 			public void run() {
 				try {
 					Looper.prepare();
 					fitItems = ConsumerWebServices.getNewsData("20", "1");
-					mGetDataNewsHandler.sendEmptyMessage(0);
+					mSetDataNewsHandler.sendEmptyMessage(0);
 					Looper.loop();
 				} catch (JSONException e) {
 
-					if (mProgressDialog.isShowing())
-						mProgressDialog.hide();
+					// TODO hide mProgressDialog in the UI thread
+					mFitNewsActivity.runOnUiThread(new Runnable() {
 
-					Toast.makeText(getApplicationContext(),
-							R.string.error_rest_full_service, Toast.LENGTH_LONG)
-							.show();
+						@Override
+						public void run() {
+							if (mProgressDialog.isShowing())
+								mProgressDialog.hide();
+							Toast.makeText(getApplicationContext(),
+									R.string.error_rest_full_service,
+									Toast.LENGTH_LONG).show();
+						}
+					});
 
 					e.printStackTrace();
 				}
@@ -239,13 +257,16 @@ public class FitNewsActivity extends ListActivity {
 	private TextView mTextSearch;
 	private ImageView mImgSearchAction;
 	private ArrayList<FitItem> fitItems;
+	private Activity mFitNewsActivity;
 
-	private Handler mGetDataNewsHandler = new Handler() {
+	private Handler mSetDataNewsHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 
 			if (fitItems.isEmpty()) {
 				Toast.makeText(getApplicationContext(),
-						R.string.message_to_empty_fit_list, Toast.LENGTH_LONG);
+						R.string.message_to_empty_fit_list, Toast.LENGTH_LONG)
+						.show();
+				// TODO set empty the list
 			} else {
 				setListAdapter(new EfficientAdapter(getApplicationContext(),
 						fitItems));

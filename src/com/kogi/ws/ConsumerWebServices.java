@@ -35,8 +35,7 @@ public class ConsumerWebServices {
 			getRequest.setURI(uri);
 
 			// getting the response
-			HttpResponse httpResponse;
-			httpResponse = httpClient.execute(getRequest);
+			HttpResponse httpResponse = httpClient.execute(getRequest);
 
 			if (httpResponse.getStatusLine().getStatusCode() != 200) {
 				// TODO search another way to return the answer with the error
@@ -44,9 +43,8 @@ public class ConsumerWebServices {
 				return fitItems;
 			}
 
-			BufferedReader in;
-			in = new BufferedReader(new InputStreamReader(httpResponse
-					.getEntity().getContent()));
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					httpResponse.getEntity().getContent()));
 
 			// getting data from response
 			String line;
@@ -77,11 +75,10 @@ public class ConsumerWebServices {
 						if (attachmentItems.length() != 0) {
 							JSONObject attachment = attachmentItems
 									.getJSONObject(0);
-							String urlImageFull;
 							JSONObject images = attachment
 									.getJSONObject("images");
 							JSONObject full = images.getJSONObject("full");
-							urlImageFull = full.getString("url");
+							String urlImageFull = full.getString("url");
 
 							if (!urlImageFull.equals("")) {
 								fitItem.setUrlImage(urlImageFull);
@@ -92,7 +89,7 @@ public class ConsumerWebServices {
 						fitItems.add(fitItem);
 
 					} catch (JSONException e) {
-						//skip one iteration
+						// skip one iteration
 					}
 
 				}

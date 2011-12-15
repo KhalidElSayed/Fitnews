@@ -2,20 +2,20 @@
 <resources>
 
     <style name="lab_tags_fit_news">
-        <item name="android:textSize">8sp</item>
+        <item name="android:textSize">8sp</item>       
         <item name="android:textColor">@color/red</item>
-        <item name="android:height">16dp</item>
     </style>
 
     <style name="lab_title_fit_news">
-        <item name="android:textSize"> 10sp</item>
+        <item name="android:textSize"> 11sp</item>
         <item name="android:textColor">@color/gray</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="lab_detail_fit_news">
-        <item name="android:textSize"> 8sp</item>
+        <item name="android:textSize"> 10sp</item>
         <item name="android:textColor">@color/black</item>
+        <item name="android:maxLines">2</item>
     </style>
 
 </resources>
