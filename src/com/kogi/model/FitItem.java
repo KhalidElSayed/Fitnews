@@ -2,12 +2,15 @@ package com.kogi.model;
 
 import java.util.ArrayList;
 
+import android.graphics.Bitmap;
+
 public class FitItem {
 
 	private int id;
 	private String titlePlain;
 	private String excerpt;
 	private String urlImage;
+	private Bitmap imageFull;
 	private ArrayList<String> tags;
 
 	public FitItem() {
@@ -62,6 +65,14 @@ public class FitItem {
 
 	public void setTags(ArrayList<String> tags) {
 		this.tags = tags;
+	}
+
+	public Bitmap getImageFull() {
+		return imageFull;
+	}
+
+	public void setImageFull(Bitmap imageFull) {
+		this.imageFull = imageFull;
 	}
 
 }

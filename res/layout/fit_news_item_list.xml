@@ -1,51 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_fit_news_item_list"
     android:layout_width="fill_parent"
-    android:layout_height="80dp"
+    android:layout_height="wrap_content"
+    android:clickable="true"
     android:background="@drawable/fit_item_list_selector" >
 
     <ImageView
         android:id="@+id/img_new_item_list_fit"
-        android:layout_width="80dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignTop="@+id/lab_detail_item_list_fit"
-        android:padding="1dp"
-        android:focusable="true"
+        android:padding="3dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:scaleType="centerCrop"
+        android:adjustViewBounds="true"
         android:src="@drawable/no_data" />
 
     <TextView
         android:id="@+id/lab_title_item_list_fit"
         style="@style/lab_title_fit_news"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/img_new_item_list_fit"
-        android:padding="1dp"
-        android:gravity="center"
         android:text="titulo" />
 
     <TextView
         android:id="@+id/lab_detail_item_list_fit"
         style="@style/lab_detail_fit_news"
         android:layout_width="fill_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/lab_title_item_list_fit"
         android:layout_toRightOf="@+id/img_new_item_list_fit"
-        android:gravity="fill|right"
-        android:padding="1dp"
         android:text="detalle" />
 
     <LinearLayout
         android:id="@+id/tags_panel"
         android:layout_width="fill_parent"
-       	android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/img_new_item_list_fit"
-        android:layout_below="@+id/lab_detail_item_list_fit"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:padding="1dp"
+        android:layout_below="@+id/lab_detail_item_list_fit"
+        android:layout_toRightOf="@+id/img_new_item_list_fit"
         android:gravity="right"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        android:padding="1dp" >
     </LinearLayout>
 
 </RelativeLayout>

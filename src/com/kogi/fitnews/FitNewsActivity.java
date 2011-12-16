@@ -1,6 +1,7 @@
 package com.kogi.fitnews;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.json.JSONException;
 
@@ -9,47 +10,59 @@ import com.kogi.util.DecoderImages;
 import com.kogi.ws.ConsumerWebServices;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.test.UiThreadTest;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class FitNewsActivity extends ListActivity {
 
-	private static class EfficientAdapter extends BaseAdapter {
+	private class EfficientAdapter extends BaseAdapter {
 
 		private LayoutInflater mInflater;
 		private Context mContext;
 		private ArrayList<FitItem> mFitItems;
 		private DisplayMetrics mDisplayMetrics;
 
-		public EfficientAdapter(Context context, ArrayList<FitItem> fitItems) {
+		protected int screenWidth;
+
+		private EfficientAdapter(Context context, ArrayList<FitItem> fitItems) {
 			mInflater = LayoutInflater.from(context);
 			mContext = context;
 			mFitItems = fitItems;
 			mDisplayMetrics = new DisplayMetrics();
 			((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
 					.getDefaultDisplay().getMetrics(mDisplayMetrics);
+
+			screenWidth = (int) (mDisplayMetrics.widthPixels * 0.3);
 		}
 
 		public int getCount() {
@@ -76,8 +89,17 @@ public class FitNewsActivity extends ListActivity {
 				convertView = mInflater.inflate(R.layout.fit_news_item_list,
 						null);
 				holder = new ViewHolder();
+
 				holder.imgNews = (ImageView) convertView
 						.findViewById(R.id.img_new_item_list_fit);
+
+				RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+						screenWidth, RelativeLayout.LayoutParams.WRAP_CONTENT);
+				layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+				layoutParams.addRule(RelativeLayout.ALIGN_TOP,
+						R.id.lab_detail_item_list_fit);
+				holder.imgNews.setLayoutParams(layoutParams);
+
 				holder.labTitle = (TextView) convertView
 						.findViewById(R.id.lab_title_item_list_fit);
 				holder.tagsPanel = (LinearLayout) convertView
@@ -95,34 +117,25 @@ public class FitNewsActivity extends ListActivity {
 			// set the list fit item data
 			// TODO manage the images in cache
 			FitItem fitItem = mFitItems.get(position);
-			if (fitItem.getUrlImage() != null
-					&& !fitItem.getUrlImage().equals("")) {
 
-				Bitmap bitmap = DecoderImages.getBitmapFromURL(fitItem
-						.getUrlImage());
+			/*
+			 * if (fitItem.getUrlImage() != null &&
+			 * !fitItem.getUrlImage().equals("")) {
+			 * 
+			 * Bitmap bitmap = DecoderImages.getBitmapFromURL(fitItem
+			 * .getUrlImage());
+			 * 
+			 * if (bitmap != null) { Bitmap bitmapResized =
+			 * DecoderImages.getBitmapReSize( bitmap, screenWidth);
+			 * holder.imgNews.setImageBitmap(bitmapResized); } } else {
+			 * 
+			 * holder.imgNews.setImageResource(R.drawable.no_data);
+			 * 
+			 * }
+			 */
 
-				if (bitmap != null) {
-					/*
-					 * Bitmap bitmapResized; int orientation =
-					 * getScreenOrientation(); switch (orientation) { case
-					 * Configuration.ORIENTATION_SQUARE: bitmapResized =
-					 * DecoderImages.getBitmapReSize(bitmap, 165);
-					 * Log.v("scren orientation", "square"); break; case
-					 * Configuration.ORIENTATION_PORTRAIT: bitmapResized =
-					 * DecoderImages.getBitmapReSize(bitmap, 165);
-					 * Log.v("scren orientation", "portrait"); break; case
-					 * Configuration.ORIENTATION_LANDSCAPE: bitmapResized =
-					 * DecoderImages.getBitmapReSize(bitmap, 200);
-					 * Log.v("scren orientation", "landscape"); default:
-					 * bitmapResized = DecoderImages.getBitmapReSize(bitmap,
-					 * 165); Log.v("scren orientation", "default"); break; }
-					 */
-
-					Bitmap bitmapResized = DecoderImages.getBitmapReSize(
-							bitmap, 120);
-					holder.imgNews.setImageBitmap(bitmapResized);
-					holder.imgNews.setAdjustViewBounds(true);
-				}
+			if (fitItem.getImageFull() != null) {
+				holder.imgNews.setImageBitmap(fitItem.getImageFull());
 			} else {
 				holder.imgNews.setImageResource(R.drawable.no_data);
 			}
@@ -130,32 +143,71 @@ public class FitNewsActivity extends ListActivity {
 			holder.labTitle.setText(fitItem.getTitlePlain());
 			holder.labDetail.setText(Html.fromHtml(fitItem.getExcerpt()));
 
-			ArrayList<String> tags = fitItem.getTags();
+			final ArrayList<String> tags = fitItem.getTags();
 			boolean continuar = true;
 
 			for (int i = 0; continuar && i < tags.size(); i++) {
 				Button butTag = new Button(mContext);
 				butTag.setTextColor(R.color.red);
-				// butTag.setTextSize(12 * mDisplayMetrics.density);
 				butTag.setTextAppearance(mContext, R.style.lab_tags_fit_news);
 
-				if (i < 2) {
+				if (i < 3) {
 					butTag.setText(tags.get(i));
+					butTag.setOnClickListener(new OnClickListener() {
+
+						@Override
+						public void onClick(View v) {
+
+						}
+					});
 				} else {
 					butTag.setText("others");
+					// Listener para lanzar dialogo de tags
+					butTag.setOnClickListener(new OnClickListener() {
+
+						@Override
+						public void onClick(View v) {
+							// create the dialog
+							AlertDialog.Builder builder = new AlertDialog.Builder(
+									mContext);
+							builder.setTitle("Pick a tag");
+							builder.setPositiveButton("Aceptar",
+									new DialogInterface.OnClickListener() {
+
+										@Override
+										public void onClick(
+												DialogInterface dialog, int id) {
+											dialog.dismiss();
+										}
+									});
+
+							// items list
+							final boolean checkedTags[] = new boolean[tags
+									.size()];
+							String items[] = new String[tags.size()];
+							tags.toArray(items);
+
+							builder.setMultiChoiceItems(
+									items,
+									checkedTags,
+									new DialogInterface.OnMultiChoiceClickListener() {
+
+										@Override
+										public void onClick(
+												DialogInterface dialog,
+												int wich, boolean isChecked) {
+											checkedTags[wich] = isChecked;
+
+										}
+									});
+
+							builder.create().show();
+						}
+					});
 					continuar = false;
 
 				}
-				/*
-				 * holder.tagsPanel.addView(butTag, i, new LayoutParams(
-				 * LayoutParams.WRAP_CONTENT, 40));
-				 */
 				// TODO set up to 20% the tags panel according screen size
-				/*
-				 * Log.e("screen size", "x= " + mDisplayMetrics.widthPixels +
-				 * " y= " + mDisplayMetrics.heightPixels + "density " +
-				 * mDisplayMetrics.density);
-				 */
 				holder.tagsPanel.addView(butTag, i, new LayoutParams(
 						LayoutParams.WRAP_CONTENT,
 						(int) (28 * mDisplayMetrics.density)));
@@ -163,35 +215,6 @@ public class FitNewsActivity extends ListActivity {
 			}
 			return convertView;
 		}
-
-		/*
-		 * protected int getScreenOrientation() {
-		 * 
-		 * Display display = ((WindowManager) mContext
-		 * .getSystemService(WINDOW_SERVICE)).getDefaultDisplay(); int
-		 * orientation = display.getOrientation();
-		 * 
-		 * // Sometimes you may get undefined orientation Value is 0 // simple
-		 * logic solves the problem compare the screen // X,Y Co-ordinates and
-		 * determine the Orientation in such cases if (orientation ==
-		 * Configuration.ORIENTATION_UNDEFINED) {
-		 * 
-		 * Configuration config = mContext.getResources() .getConfiguration();
-		 * orientation = config.orientation;
-		 * 
-		 * if (orientation == Configuration.ORIENTATION_UNDEFINED) { // if
-		 * height and widht of screen are equal then // it is square orientation
-		 * if (display.getWidth() == display.getHeight()) { orientation =
-		 * Configuration.ORIENTATION_SQUARE; } else { // if widht is less than
-		 * height than it is portrait if (display.getWidth() <
-		 * display.getHeight()) { orientation =
-		 * Configuration.ORIENTATION_PORTRAIT; } else { // if it is not any of
-		 * the above it will // defineitly // be landscape orientation =
-		 * Configuration.ORIENTATION_LANDSCAPE; } } } } return orientation; //
-		 * return value 1 is portrait and 2 is Landscape // Mode
-		 * 
-		 * return mContext.getResources().getConfiguration().orientation; }
-		 */
 	}
 
 	static class ViewHolder {
@@ -229,6 +252,7 @@ public class FitNewsActivity extends ListActivity {
 				try {
 					Looper.prepare();
 					fitItems = ConsumerWebServices.getNewsData("20", "1");
+					downloadImagesFitItems(fitItems);
 					mSetDataNewsHandler.sendEmptyMessage(0);
 					Looper.loop();
 				} catch (JSONException e) {
@@ -251,6 +275,7 @@ public class FitNewsActivity extends ListActivity {
 
 			}
 		}).start();
+
 	}
 
 	private ProgressDialog mProgressDialog;
@@ -258,6 +283,7 @@ public class FitNewsActivity extends ListActivity {
 	private ImageView mImgSearchAction;
 	private ArrayList<FitItem> fitItems;
 	private Activity mFitNewsActivity;
+	private EfficientAdapter mEfficientAdapter;
 
 	private Handler mSetDataNewsHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
@@ -268,12 +294,35 @@ public class FitNewsActivity extends ListActivity {
 						.show();
 				// TODO set empty the list
 			} else {
-				setListAdapter(new EfficientAdapter(getApplicationContext(),
-						fitItems));
+				mEfficientAdapter = new EfficientAdapter(FitNewsActivity.this,
+						fitItems);
+				setListAdapter(mEfficientAdapter);
 			}
 			if (mProgressDialog.isShowing())
 				mProgressDialog.hide();
 		};
 	};
+
+	public void downloadImagesFitItems(ArrayList<FitItem> fitItems) {
+		for (FitItem fitItem : fitItems) {
+			boolean finished = false;
+			int intentos = 1;
+			int width = (int) (getWindowManager().getDefaultDisplay()
+					.getWidth() * 0.3);
+			while (!finished && intentos <= 2) {
+				Bitmap bmp = DecoderImages.getBitmapFromURL(fitItem
+						.getUrlImage());
+				if (bmp != null) {
+					Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
+							width);
+					fitItem.setImageFull(bmpResized);
+					finished = true;
+				} else {
+					intentos++;
+				}
+
+			}
+		}
+	}
 
 }

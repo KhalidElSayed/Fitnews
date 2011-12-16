@@ -41,7 +41,7 @@ public class DecoderImages {
 		}
 		Matrix matrix = new Matrix();
 		// resize the bit map
-		Log.e("new scale", "" + newScale);
+		Log.e("new scale", " " + newScale);
 		matrix.postScale((float) 1 / newScale, (float) 1 / newScale);
 
 		// recreate the new Bitmap

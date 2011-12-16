@@ -17,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.kogi.model.FitItem;
+import com.kogi.util.DecoderImages;
 
 public class ConsumerWebServices {
 
@@ -81,7 +82,7 @@ public class ConsumerWebServices {
 							String urlImageFull = full.getString("url");
 
 							if (!urlImageFull.equals("")) {
-								fitItem.setUrlImage(urlImageFull);
+								fitItem.setUrlImage(urlImageFull);								
 							}
 						}
 
