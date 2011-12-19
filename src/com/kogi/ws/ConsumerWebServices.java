@@ -7,7 +7,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -38,15 +40,19 @@ public class ConsumerWebServices {
 			// getting the response
 			HttpResponse httpResponse = httpClient.execute(getRequest);
 
-			if (httpResponse.getStatusLine().getStatusCode() != 200) {
+			final int statusCode = httpResponse.getStatusLine().getStatusCode();
+
+			if (statusCode != HttpStatus.SC_OK) {
 				// TODO search another way to return the answer with the error
 				// code (some costum exception)
 				return fitItems;
 			}
 
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					httpResponse.getEntity().getContent()));
+			final HttpEntity entity = httpResponse.getEntity();
 
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					entity.getContent()));
+			
 			// getting data from response
 			String line;
 			while ((line = in.readLine()) != null) {
@@ -58,10 +64,17 @@ public class ConsumerWebServices {
 
 					try {
 						JSONObject postItem = postItems.getJSONObject(i);
+
 						FitItem fitItem = new FitItem();
 						fitItem.setId(postItem.getInt("id"));
-						fitItem.setTitlePlain(postItem.getString("title_plain"));
-						fitItem.setExcerpt(postItem.getString("excerpt"));
+
+						String titlePlain = postItem.getString("title_plain");
+						if (!titlePlain.equals(""))
+							fitItem.setTitlePlain(titlePlain);
+
+						String excerpt = postItem.getString("excerpt");
+						if (!excerpt.equals(""))
+							fitItem.setExcerpt(excerpt);
 
 						// get tags from a post
 						JSONArray tagsItems = postItem.getJSONArray("tags");
@@ -82,7 +95,7 @@ public class ConsumerWebServices {
 							String urlImageFull = full.getString("url");
 
 							if (!urlImageFull.equals("")) {
-								fitItem.setUrlImage(urlImageFull);								
+								fitItem.setUrlImage(urlImageFull);
 							}
 						}
 

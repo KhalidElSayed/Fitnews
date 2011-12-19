@@ -1,24 +1,22 @@
 package com.kogi.fitnews;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.json.JSONException;
 
+import com.kogi.fitnews.PullToRefreshListView.OnRefreshListener;
 import com.kogi.model.FitItem;
 import com.kogi.util.DecoderImages;
 import com.kogi.ws.ConsumerWebServices;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -32,12 +30,9 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -49,15 +44,16 @@ public class FitNewsActivity extends ListActivity {
 
 		private LayoutInflater mInflater;
 		private Context mContext;
-		private ArrayList<FitItem> mFitItems;
 		private DisplayMetrics mDisplayMetrics;
 
 		protected int screenWidth;
 
-		private EfficientAdapter(Context context, ArrayList<FitItem> fitItems) {
+		private EfficientAdapter(Context context,
+				ArrayList<FitItem> fitItemsList) {
+
 			mInflater = LayoutInflater.from(context);
 			mContext = context;
-			mFitItems = fitItems;
+			mFitItems = fitItemsList;
 			mDisplayMetrics = new DisplayMetrics();
 			((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
 					.getDefaultDisplay().getMetrics(mDisplayMetrics);
@@ -92,6 +88,8 @@ public class FitNewsActivity extends ListActivity {
 
 				holder.imgNews = (ImageView) convertView
 						.findViewById(R.id.img_new_item_list_fit);
+				holder.imgNews.setMinimumWidth(screenWidth);
+				holder.imgNews.setMaxWidth(screenWidth);
 
 				RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
 						screenWidth, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -112,27 +110,13 @@ public class FitNewsActivity extends ListActivity {
 				holder = (ViewHolder) convertView.getTag();
 				// clean all tags added to tagspanel
 				holder.tagsPanel.removeAllViews();
+				// clean the image fit
+				holder.imgNews.setImageDrawable(null);
 			}
 
 			// set the list fit item data
 			// TODO manage the images in cache
 			FitItem fitItem = mFitItems.get(position);
-
-			/*
-			 * if (fitItem.getUrlImage() != null &&
-			 * !fitItem.getUrlImage().equals("")) {
-			 * 
-			 * Bitmap bitmap = DecoderImages.getBitmapFromURL(fitItem
-			 * .getUrlImage());
-			 * 
-			 * if (bitmap != null) { Bitmap bitmapResized =
-			 * DecoderImages.getBitmapReSize( bitmap, screenWidth);
-			 * holder.imgNews.setImageBitmap(bitmapResized); } } else {
-			 * 
-			 * holder.imgNews.setImageResource(R.drawable.no_data);
-			 * 
-			 * }
-			 */
 
 			if (fitItem.getImageFull() != null) {
 				holder.imgNews.setImageBitmap(fitItem.getImageFull());
@@ -151,16 +135,7 @@ public class FitNewsActivity extends ListActivity {
 				butTag.setTextColor(R.color.red);
 				butTag.setTextAppearance(mContext, R.style.lab_tags_fit_news);
 
-				if (i < 3) {
-					butTag.setText(tags.get(i));
-					butTag.setOnClickListener(new OnClickListener() {
-
-						@Override
-						public void onClick(View v) {
-
-						}
-					});
-				} else {
+				if (i == 2 && tags.size() >= 4) {
 					butTag.setText("others");
 					// Listener para lanzar dialogo de tags
 					butTag.setOnClickListener(new OnClickListener() {
@@ -205,8 +180,18 @@ public class FitNewsActivity extends ListActivity {
 						}
 					});
 					continuar = false;
+				} else {
 
+					butTag.setText(tags.get(i));
+					butTag.setOnClickListener(new OnClickListener() {
+
+						@Override
+						public void onClick(View v) {
+
+						}
+					});
 				}
+
 				// TODO set up to 20% the tags panel according screen size
 				holder.tagsPanel.addView(butTag, i, new LayoutParams(
 						LayoutParams.WRAP_CONTENT,
@@ -243,16 +228,29 @@ public class FitNewsActivity extends ListActivity {
 		mProgressDialog.setIndeterminate(true);
 		mProgressDialog.show();
 
+		// Set a listener to be invoked when the list should be refreshed.
+		((PullToRefreshListView) getListView())
+				.setOnRefreshListener(new OnRefreshListener() {
+
+					@Override
+					public void onRefresh() {
+						// Do work to refresh the list here.
+						new GetFitItemsWhenPullingToRefreshTask().execute();
+
+					}
+				});
+
 		// TODO manage the request service by time
 		// TODO uses internet manager to detect the network state
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
+
 				try {
 					Looper.prepare();
-					fitItems = ConsumerWebServices.getNewsData("20", "1");
-					downloadImagesFitItems(fitItems);
+					mFitItems = ConsumerWebServices.getNewsData("20", "1");
+					downloadImagesFitItems(mFitItems);
 					mSetDataNewsHandler.sendEmptyMessage(0);
 					Looper.loop();
 				} catch (JSONException e) {
@@ -278,25 +276,17 @@ public class FitNewsActivity extends ListActivity {
 
 	}
 
-	private ProgressDialog mProgressDialog;
-	private TextView mTextSearch;
-	private ImageView mImgSearchAction;
-	private ArrayList<FitItem> fitItems;
-	private Activity mFitNewsActivity;
-	private EfficientAdapter mEfficientAdapter;
-
 	private Handler mSetDataNewsHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 
-			if (fitItems.isEmpty()) {
+			if (mFitItems.isEmpty()) {
 				Toast.makeText(getApplicationContext(),
 						R.string.message_to_empty_fit_list, Toast.LENGTH_LONG)
 						.show();
 				// TODO set empty the list
 			} else {
-				mEfficientAdapter = new EfficientAdapter(FitNewsActivity.this,
-						fitItems);
-				setListAdapter(mEfficientAdapter);
+				setListAdapter(new EfficientAdapter(FitNewsActivity.this,
+						mFitItems));
 			}
 			if (mProgressDialog.isShowing())
 				mProgressDialog.hide();
@@ -304,25 +294,79 @@ public class FitNewsActivity extends ListActivity {
 	};
 
 	public void downloadImagesFitItems(ArrayList<FitItem> fitItems) {
-		for (FitItem fitItem : fitItems) {
-			boolean finished = false;
-			int intentos = 1;
-			int width = (int) (getWindowManager().getDefaultDisplay()
-					.getWidth() * 0.3);
-			while (!finished && intentos <= 2) {
-				Bitmap bmp = DecoderImages.getBitmapFromURL(fitItem
-						.getUrlImage());
-				if (bmp != null) {
-					Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
-							width);
-					fitItem.setImageFull(bmpResized);
-					finished = true;
-				} else {
-					intentos++;
-				}
+		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.3);
 
+		for (FitItem fitItem : fitItems) {
+			String urlImage = fitItem.getUrlImage();
+			if (urlImage != null && !urlImage.equals("")) {
+
+				boolean finished = false;
+				int intentos = 1;
+				while (!finished && intentos <= 2) {
+					Bitmap bmp = DecoderImages.getBitmapFromURL(fitItem
+							.getUrlImage());
+					if (bmp != null) {
+						Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
+								width);
+						fitItem.setImageFull(bmpResized);
+						finished = true;
+					} else {
+						intentos++;
+					}
+
+				}
 			}
 		}
 	}
+
+	private class GetFitItemsWhenPullingToRefreshTask extends
+			AsyncTask<Void, Void, Void> {
+
+		private ArrayList<FitItem> newFitItemsList = null;
+
+		@Override
+		protected Void doInBackground(Void... params) {
+
+			if (isCancelled()) {
+				return null;
+			}
+
+			try {
+				newFitItemsList = ConsumerWebServices.getNewsData("20", "1");
+				if (!newFitItemsList.isEmpty()) {
+					downloadImagesFitItems(newFitItemsList);
+				}
+			} catch (JSONException e) {
+			}
+			return null;
+
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+
+			if (newFitItemsList != null && !newFitItemsList.isEmpty()) {
+				mFitItems = newFitItemsList;
+				((BaseAdapter) getListAdapter()).notifyDataSetChanged();
+			}
+
+			// Call onRefreshComplete when the list has been refreshed.
+			((PullToRefreshListView) getListView()).onRefreshComplete();
+
+			super.onPostExecute(result);
+		}
+
+		@Override
+		protected void onCancelled() {
+			// reset the UI
+			((PullToRefreshListView) getListView()).onRefreshComplete();
+		}
+	}
+
+	private ProgressDialog mProgressDialog;
+	private TextView mTextSearch;
+	private ImageView mImgSearchAction;
+	private ArrayList<FitItem> mFitItems;
+	private Activity mFitNewsActivity;
 
 }

@@ -31,13 +31,13 @@
             android:src="@drawable/ic_bar_search" />
     </RelativeLayout>
 
-    <ListView
+    <com.kogi.fitnews.PullToRefreshListView
         android:id="@android:id/list"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_below="@+id/search_bar"        
         android:background="@color/white" >
-    </ListView>
+    </com.kogi.fitnews.PullToRefreshListView>
 
     <TextView
         android:id="@android:id/empty"

@@ -22,14 +22,20 @@ public final class R {
         public static final int fit_item_list_selector=0x7f020000;
         public static final int ic_bar_search=0x7f020001;
         public static final int ic_launcher=0x7f020002;
-        public static final int img_test=0x7f020003;
-        public static final int no_data=0x7f020004;
+        public static final int ic_pulltorefresh_arrow=0x7f020003;
+        public static final int img_test=0x7f020004;
+        public static final int no_data=0x7f020005;
     }
     public static final class id {
         public static final int img_new_item_list_fit=0x7f070001;
         public static final int img_search_action=0x7f070007;
         public static final int lab_detail_item_list_fit=0x7f070002;
         public static final int lab_title_item_list_fit=0x7f070003;
+        public static final int pull_to_refresh_header=0x7f070008;
+        public static final int pull_to_refresh_image=0x7f07000a;
+        public static final int pull_to_refresh_progress=0x7f070009;
+        public static final int pull_to_refresh_text=0x7f07000b;
+        public static final int pull_to_refresh_updated_at=0x7f07000c;
         public static final int root_fit_news_item_list=0x7f070000;
         public static final int search_bar=0x7f070005;
         public static final int tags_panel=0x7f070004;
@@ -39,12 +45,17 @@ public final class R {
         public static final int fit_news_item_list=0x7f030000;
         public static final int fit_news_item_list_b=0x7f030001;
         public static final int fit_news_list=0x7f030002;
+        public static final int pull_to_refresh_header=0x7f030003;
     }
     public static final class string {
         public static final int app_name=0x7f050001;
         public static final int error_rest_full_service=0x7f050003;
         public static final int hello=0x7f050000;
         public static final int message_to_empty_fit_list=0x7f050002;
+        public static final int pull_to_refresh_pull_label=0x7f050004;
+        public static final int pull_to_refresh_refreshing_label=0x7f050006;
+        public static final int pull_to_refresh_release_label=0x7f050005;
+        public static final int pull_to_refresh_tap_label=0x7f050007;
     }
     public static final class style {
         public static final int lab_detail_fit_news=0x7f060002;
