@@ -2,7 +2,7 @@
 <resources>
 
     <style name="lab_tags_fit_news">
-        <item name="android:textSize">8sp</item>       
+        <item name="android:textSize">9sp</item>       
         <item name="android:textColor">@color/red</item>
     </style>
 

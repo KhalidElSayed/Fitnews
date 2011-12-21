@@ -20,9 +20,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.text.Html;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -131,7 +131,7 @@ public class FitNewsActivity extends ListActivity {
 			boolean continuar = true;
 
 			for (int i = 0; continuar && i < tags.size(); i++) {
-				Button butTag = new Button(mContext);
+				final Button butTag = new Button(mContext);
 				butTag.setTextColor(R.color.red);
 				butTag.setTextAppearance(mContext, R.style.lab_tags_fit_news);
 
@@ -146,6 +146,23 @@ public class FitNewsActivity extends ListActivity {
 							AlertDialog.Builder builder = new AlertDialog.Builder(
 									mContext);
 							builder.setTitle("Pick a tag");
+
+							// items dialog
+							final String items[] = new String[tags.size()];
+							tags.toArray(items);
+							final Message itemSelected = Message.obtain();
+							itemSelected.arg1 = -1;
+							builder.setSingleChoiceItems(items, -1,
+									new DialogInterface.OnClickListener() {
+
+										@Override
+										public void onClick(
+												DialogInterface dialog, int pos) {
+											itemSelected.arg1 = pos;
+										}
+									});
+
+							// accept but
 							builder.setPositiveButton("Aceptar",
 									new DialogInterface.OnClickListener() {
 
@@ -153,26 +170,18 @@ public class FitNewsActivity extends ListActivity {
 										public void onClick(
 												DialogInterface dialog, int id) {
 											dialog.dismiss();
-										}
-									});
+											if (itemSelected.arg1 != -1) {
 
-							// items list
-							final boolean checkedTags[] = new boolean[tags
-									.size()];
-							String items[] = new String[tags.size()];
-							tags.toArray(items);
+												mTagProgressDialog = buildProgressDialog(
+														"Searching posts by "
+																+ items[itemSelected.arg1],
+														true, true);
+												mTagProgressDialog.show();
 
-							builder.setMultiChoiceItems(
-									items,
-									checkedTags,
-									new DialogInterface.OnMultiChoiceClickListener() {
-
-										@Override
-										public void onClick(
-												DialogInterface dialog,
-												int wich, boolean isChecked) {
-											checkedTags[wich] = isChecked;
-
+												new ProcessTagButtonPressedThread(
+														items[itemSelected.arg1],
+														"20", "1").start();
+											}
 										}
 									});
 
@@ -187,7 +196,13 @@ public class FitNewsActivity extends ListActivity {
 
 						@Override
 						public void onClick(View v) {
-
+							mTagProgressDialog = buildProgressDialog(
+									"Searching posts by "
+											+ butTag.getText().toString(),
+									false, true);
+							mTagProgressDialog.show();
+							new ProcessTagButtonPressedThread(butTag.getText()
+									.toString(), "20", "1").start();
 						}
 					});
 				}
@@ -216,17 +231,12 @@ public class FitNewsActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.fit_news_list);
 
-		mFitNewsActivity = this;
-
 		mTextSearch = (TextView) findViewById(R.id.txt_search);
 		mImgSearchAction = (ImageView) findViewById(R.id.img_search_action);
 
-		mProgressDialog = new ProgressDialog(FitNewsActivity.this);
-		mProgressDialog.setMessage("Searching news on the web...");
-		mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mProgressDialog.setCancelable(false);
-		mProgressDialog.setIndeterminate(true);
-		mProgressDialog.show();
+		mFItProgressDialog = buildProgressDialog(
+				"Searching news on the web...", false, true);
+		mFItProgressDialog.show();
 
 		// Set a listener to be invoked when the list should be refreshed.
 		((PullToRefreshListView) getListView())
@@ -240,43 +250,47 @@ public class FitNewsActivity extends ListActivity {
 					}
 				});
 
-		// TODO manage the request service by time
 		// TODO uses internet manager to detect the network state
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
-
+				final Message msg = Message.obtain();
+				msg.obj = mFItProgressDialog;
 				try {
-					Looper.prepare();
-					mFitItems = ConsumerWebServices.getNewsData("20", "1");
-					downloadImagesFitItems(mFitItems);
-					mSetDataNewsHandler.sendEmptyMessage(0);
-					Looper.loop();
+					mFitItems = ConsumerWebServices.getInstance()
+							.getFitNewsData("20", "1");
+					if (mFitItems.isEmpty()) {
+						mHideProgressDialogHandler.sendMessage(msg);
+						Toast.makeText(getApplicationContext(),
+								R.string.message_to_empty_fit_list,
+								Toast.LENGTH_LONG).show();
+					} else {
+						downloadImagesFitItems(mFitItems);
+						getListView().post(new Runnable() {
+
+							@Override
+							public void run() {
+								setListAdapter(new EfficientAdapter(
+										FitNewsActivity.this, mFitItems));
+								mHideProgressDialogHandler.sendMessage(msg);
+							}
+						});
+					}
+
 				} catch (JSONException e) {
-
-					// TODO hide mProgressDialog in the UI thread
-					mFitNewsActivity.runOnUiThread(new Runnable() {
-
-						@Override
-						public void run() {
-							if (mProgressDialog.isShowing())
-								mProgressDialog.hide();
-							Toast.makeText(getApplicationContext(),
-									R.string.error_rest_full_service,
-									Toast.LENGTH_LONG).show();
-						}
-					});
-
+					mHideProgressDialogHandler.sendMessage(msg);
+					Toast.makeText(getApplicationContext(),
+							R.string.error_rest_full_service, Toast.LENGTH_LONG)
+							.show();
 					e.printStackTrace();
 				}
-
 			}
 		}).start();
 
 	}
 
-	private Handler mSetDataNewsHandler = new Handler() {
+	private Handler mSetDataFitNewsHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 
 			if (mFitItems.isEmpty()) {
@@ -288,12 +302,19 @@ public class FitNewsActivity extends ListActivity {
 				setListAdapter(new EfficientAdapter(FitNewsActivity.this,
 						mFitItems));
 			}
-			if (mProgressDialog.isShowing())
-				mProgressDialog.hide();
+			mHideProgressDialogHandler.sendEmptyMessage(0);
 		};
 	};
 
-	public void downloadImagesFitItems(ArrayList<FitItem> fitItems) {
+	final private Handler mHideProgressDialogHandler = new Handler() {
+		public void handleMessage(android.os.Message msg) {
+			ProgressDialog progressDialog = (ProgressDialog) msg.obj;
+			if (progressDialog.isShowing())
+				progressDialog.dismiss();
+		};
+	};
+
+	protected void downloadImagesFitItems(ArrayList<FitItem> fitItems) {
 		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.3);
 
 		for (FitItem fitItem : fitItems) {
@@ -332,7 +353,8 @@ public class FitNewsActivity extends ListActivity {
 			}
 
 			try {
-				newFitItemsList = ConsumerWebServices.getNewsData("20", "1");
+				newFitItemsList = ConsumerWebServices.getInstance()
+						.getFitNewsData("20", "1");
 				if (!newFitItemsList.isEmpty()) {
 					downloadImagesFitItems(newFitItemsList);
 				}
@@ -363,10 +385,70 @@ public class FitNewsActivity extends ListActivity {
 		}
 	}
 
-	private ProgressDialog mProgressDialog;
+	class ProcessTagButtonPressedThread extends Thread {
+		String tag;
+		String count;
+		String page;
+
+		public ProcessTagButtonPressedThread(String tag, String count,
+				String page) {
+			this.tag = tag;
+			this.count = count;
+			this.page = page;
+		}
+
+		private void processTagButtonPressed() {
+
+			try {
+				final ArrayList<FitItem> newFits = ConsumerWebServices
+						.getInstance().getFitNewsDataByTag(tag, count, page);
+				if (!newFits.isEmpty()) {
+					mFitItems = newFits;
+					downloadImagesFitItems(mFitItems);
+					getListView().post(new Runnable() {
+
+						@Override
+						public void run() {
+							((BaseAdapter) getListAdapter())
+									.notifyDataSetChanged();
+						}
+					});
+
+				} else {
+					Toast.makeText(FitNewsActivity.this, "No posts by " + tag,
+							Toast.LENGTH_LONG).show();
+				}
+			} catch (JSONException e) {
+				Toast.makeText(FitNewsActivity.this, e.getMessage(),
+						Toast.LENGTH_LONG);
+			}
+			Message msg = Message.obtain();
+			msg.obj = mTagProgressDialog;
+			mHideProgressDialogHandler.sendMessage(msg);
+
+		}
+
+		@Override
+		public void run() {
+			processTagButtonPressed();
+		}
+
+	}
+
+	private ProgressDialog buildProgressDialog(String msg,
+			boolean isCancelable, boolean isIndeterminate) {
+		ProgressDialog progressDialog = new ProgressDialog(FitNewsActivity.this);
+		progressDialog.setIndeterminate(true);
+		progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		progressDialog.setCancelable(false);
+		progressDialog.setMessage(msg);
+
+		return progressDialog;
+	}
+
+	private ProgressDialog mFItProgressDialog;
+	private ProgressDialog mTagProgressDialog;
 	private TextView mTextSearch;
 	private ImageView mImgSearchAction;
 	private ArrayList<FitItem> mFitItems;
-	private Activity mFitNewsActivity;
-
 }

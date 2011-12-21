@@ -19,22 +19,66 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.kogi.model.FitItem;
-import com.kogi.util.DecoderImages;
 
 public class ConsumerWebServices {
 
-	public static String URL_FIT_NEWS = "http://66.228.57.165/wordpress/?json=get_recent_post&";
+	public static String URL_GET_FIT_NEWS = "http://66.228.57.165/wordpress/?json=get_recent_post&";
+	public static String URL_GET_FIT_NEWS_BY_TAG = "http://66.228.57.165/wordpress/?json=get_tag_posts&tag_slug=";
 
-	public static ArrayList<FitItem> getNewsData(String count, String page)
+	// http://66.228.57.165/wordpress/?json=get_tag_posts&tag_slug=jagger&count=20&page=1
+
+	private static ConsumerWebServices instance = null;
+
+	private ConsumerWebServices() {
+	}
+
+	public static ConsumerWebServices getInstance() {
+		if (instance == null) {
+			instance = new ConsumerWebServices();
+		}
+		return instance;
+	}
+
+	public ArrayList<FitItem> getFitNewsData(String count, String page)
 			throws JSONException {
 
-		// Building the request
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpGet getRequest = new HttpGet();
-		URI uri;
-		ArrayList<FitItem> fitItems = new ArrayList<FitItem>();
+		// make the web service´s url
+		String url = URL_GET_FIT_NEWS + "count=" + count + "&page=" + page;
+		ArrayList<FitItem> fitItems;
 		try {
-			uri = new URI(URL_FIT_NEWS + "count=20" + "&" + "page=" + page);
+			String json = getJSONFromURL(url);
+			fitItems = getPostsFromJSON(json);
+		} catch (IOException e) {
+			throw new JSONException("Error process the JSON");
+		} catch (JSONException e) {
+			throw (e);
+		}
+		return fitItems;
+	}
+
+	public ArrayList<FitItem> getFitNewsDataByTag(String tag, String count,
+			String page) throws JSONException {
+		String url = URL_GET_FIT_NEWS_BY_TAG + tag + "&count=" + count
+				+ "&page=" + page;
+		ArrayList<FitItem> fitItems;
+		String json;
+		try {
+			json = getJSONFromURL(url);
+			fitItems = getPostsFromJSON(json);
+		} catch (IOException e) {
+			throw new JSONException("Error process the JSON");
+		} catch (JSONException e) {
+			throw (e);
+		}
+		return fitItems;
+	}
+
+	private String getJSONFromURL(String url) throws IOException {
+		try {
+			// Building the request
+			HttpClient httpClient = new DefaultHttpClient();
+			URI uri = new URI(url);
+			HttpGet getRequest = new HttpGet();
 			getRequest.setURI(uri);
 
 			// getting the response
@@ -42,87 +86,90 @@ public class ConsumerWebServices {
 
 			final int statusCode = httpResponse.getStatusLine().getStatusCode();
 
+			// check the response if it's ok
 			if (statusCode != HttpStatus.SC_OK) {
 				// TODO search another way to return the answer with the error
 				// code (some costum exception)
-				return fitItems;
+				return null;
 			}
 
 			final HttpEntity entity = httpResponse.getEntity();
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(
 					entity.getContent()));
-			
-			// getting data from response
-			String line;
-			while ((line = in.readLine()) != null) {
 
-				JSONObject jsonObject = new JSONObject(line);
-				JSONArray postItems = jsonObject.getJSONArray("posts");
+			String data = in.readLine();
+			return data;
+		} catch (URISyntaxException e) {
+			throw new IOException("Error internet connection");
+		} catch (ClientProtocolException e) {
+			throw new IOException("Error internet connection");
+		} catch (IOException e) {
+			throw new IOException("Error internet connection");
+		}
 
-				for (int i = 0; i < postItems.length(); i++) {
+	}
 
-					try {
-						JSONObject postItem = postItems.getJSONObject(i);
+	private ArrayList<FitItem> getPostsFromJSON(String json)
+			throws JSONException {
 
-						FitItem fitItem = new FitItem();
-						fitItem.setId(postItem.getInt("id"));
+		JSONObject jsonObject;
+		JSONArray postItems;
+		try {
+			jsonObject = new JSONObject(json);
+			postItems = jsonObject.getJSONArray("posts");
+		} catch (JSONException e1) {
+			throw new JSONException("Error process the JSON");
+		}
 
-						String titlePlain = postItem.getString("title_plain");
-						if (!titlePlain.equals(""))
-							fitItem.setTitlePlain(titlePlain);
+		ArrayList<FitItem> fitItems = new ArrayList<FitItem>();
 
-						String excerpt = postItem.getString("excerpt");
-						if (!excerpt.equals(""))
-							fitItem.setExcerpt(excerpt);
+		for (int i = 0; i < postItems.length(); i++) {
 
-						// get tags from a post
-						JSONArray tagsItems = postItem.getJSONArray("tags");
-						for (int j = 0; j < tagsItems.length(); j++) {
-							JSONObject tagItem = tagsItems.getJSONObject(j);
-							fitItem.getTags().add(tagItem.getString("slug"));
-						}
+			try {
+				JSONObject postItem = postItems.getJSONObject(i);
 
-						// get an attachment from a post
-						JSONArray attachmentItems = postItem
-								.getJSONArray("attachments");
-						if (attachmentItems.length() != 0) {
-							JSONObject attachment = attachmentItems
-									.getJSONObject(0);
-							JSONObject images = attachment
-									.getJSONObject("images");
-							JSONObject full = images.getJSONObject("full");
-							String urlImageFull = full.getString("url");
+				FitItem fitItem = new FitItem();
+				fitItem.setId(postItem.getInt("id"));
 
-							if (!urlImageFull.equals("")) {
-								fitItem.setUrlImage(urlImageFull);
-							}
-						}
+				String titlePlain = postItem.getString("title_plain");
+				if (!titlePlain.equals(""))
+					fitItem.setTitlePlain(titlePlain);
 
-						// add fitItem to the list of fitItems
-						fitItems.add(fitItem);
+				String excerpt = postItem.getString("excerpt");
+				if (!excerpt.equals(""))
+					fitItem.setExcerpt(excerpt);
 
-					} catch (JSONException e) {
-						// skip one iteration
-					}
-
+				// get tags from a post
+				JSONArray tagsItems = postItem.getJSONArray("tags");
+				for (int j = 0; j < tagsItems.length(); j++) {
+					JSONObject tagItem = tagsItems.getJSONObject(j);
+					fitItem.getTags().add(tagItem.getString("slug"));
 				}
 
+				// get an attachment from a post
+				JSONArray attachmentItems = postItem
+						.getJSONArray("attachments");
+				if (attachmentItems.length() != 0) {
+					JSONObject attachment = attachmentItems.getJSONObject(0);
+					JSONObject images = attachment.getJSONObject("images");
+					JSONObject full = images.getJSONObject("full");
+					String urlImageFull = full.getString("url");
+
+					if (!urlImageFull.equals("")) {
+						fitItem.setUrlImage(urlImageFull);
+					}
+				}
+
+				// add fitItem to the list of fitItems
+				fitItems.add(fitItem);
+
+			} catch (JSONException e) {
+				// skip the current (i) post
 			}
 
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			throw new JSONException("Error process the URI");
-		} catch (ClientProtocolException e) {
-			e.printStackTrace();
-			throw new JSONException("Error to connect to internet");
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-			throw new JSONException("Error in the vm");
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new JSONException("Error to connect to internet");
 		}
+
 		return fitItems;
 	}
 }
