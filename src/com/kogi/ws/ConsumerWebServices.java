@@ -24,8 +24,7 @@ public class ConsumerWebServices {
 
 	public static String URL_GET_FIT_NEWS = "http://66.228.57.165/wordpress/?json=get_recent_post&";
 	public static String URL_GET_FIT_NEWS_BY_TAG = "http://66.228.57.165/wordpress/?json=get_tag_posts&tag_slug=";
-
-	// http://66.228.57.165/wordpress/?json=get_tag_posts&tag_slug=jagger&count=20&page=1
+	public static String URL_GET_FIT_NEWS_BY_QUERY = "http://66.228.57.165/wordpress/?json=get_search_results&search=";
 
 	private static ConsumerWebServices instance = null;
 
@@ -71,6 +70,24 @@ public class ConsumerWebServices {
 			throw (e);
 		}
 		return fitItems;
+	}
+
+	public ArrayList<FitItem> getFitNewsDataByQuery(String query, String count,
+			String page) throws JSONException {
+		String url = URL_GET_FIT_NEWS_BY_QUERY + query + "&count=" + count
+				+ "&page=" + page;
+		ArrayList<FitItem> fitItems;
+		String json;
+		try {
+			json = getJSONFromURL(url);
+			fitItems = getPostsFromJSON(json);
+		} catch (IOException e) {
+			throw new JSONException("Error process the JSON");
+		} catch (JSONException e) {
+			throw (e);
+		}
+		return fitItems;
+
 	}
 
 	private String getJSONFromURL(String url) throws IOException {

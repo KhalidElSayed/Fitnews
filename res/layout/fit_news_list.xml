@@ -2,9 +2,10 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical" 
     android:focusable="true"
-    android:focusableInTouchMode="true">
+    android:focusableInTouchMode="true"
+    android:background="@color/gray"
+    android:orientation="vertical" >
 
     <RelativeLayout
         android:id="@+id/search_bar"
@@ -17,7 +18,10 @@
             android:id="@+id/txt_search"
             android:layout_width="270dp"
             android:layout_height="wrap_content"
-            android:padding="2dp" >
+            android:hint="@string/text_hint_search"
+            android:inputType="textAutoComplete"
+            android:padding="2dp"
+            android:singleLine="true" >
         </EditText>
 
         <ImageView
@@ -35,16 +39,19 @@
         android:id="@android:id/list"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_below="@+id/search_bar"        
-        android:background="@color/white" >
+        android:layout_below="@+id/search_bar"
+        android:clickable="true"
+        android:divider="@drawable/list_divider_line"
+        android:dividerHeight="1dp">
     </com.kogi.fitnews.PullToRefreshListView>
 
     <TextView
         android:id="@android:id/empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#FF0000"
         android:layout_centerInParent="true"
-        android:text="No data" />
+        android:background="#FF0000"
+        android:text="No data"
+        android:visibility="invisible" />
 
 </RelativeLayout>
