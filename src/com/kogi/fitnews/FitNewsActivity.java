@@ -1,10 +1,12 @@
 package com.kogi.fitnews;
 
+import java.security.KeyStore.LoadStoreParameter;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONException;
 
+import com.kogi.fitnews.PullToRefreshListView.OnLoadMoreListener;
 import com.kogi.fitnews.PullToRefreshListView.OnRefreshListener;
 import com.kogi.model.FitItem;
 import com.kogi.util.DecoderImages;
@@ -31,11 +33,14 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.SlidingDrawer;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -243,7 +248,8 @@ public class FitNewsActivity extends ListActivity {
 				String query = mTextSearch.getText().toString();
 				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 				imm.hideSoftInputFromWindow(
-						mTextSearch.getApplicationWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS );
+						mTextSearch.getApplicationWindowToken(),
+						InputMethodManager.HIDE_NOT_ALWAYS);
 
 				if (!query.equals("")) {
 					mProgressDialog = buildProgressDialog("Searching posts by "
@@ -258,6 +264,9 @@ public class FitNewsActivity extends ListActivity {
 				false, true);
 		mProgressDialog.show();
 
+		mFitItems = new ArrayList<FitItem>();
+		setListAdapter(new EfficientAdapter(FitNewsActivity.this, mFitItems));
+
 		// Set a listener to be invoked when the list should be refreshed.
 		((PullToRefreshListView) getListView())
 				.setOnRefreshListener(new OnRefreshListener() {
@@ -269,8 +278,12 @@ public class FitNewsActivity extends ListActivity {
 
 					}
 				});
+		// set a listener to be invoged when the list reaches the end
+		((PullToRefreshListView) getListView())
+				.setOnLoadMoreListener(mOnLoadMoreListener);
 
 		// TODO uses internet manager to detect the network state
+		// load initial posts
 		new Thread(new Runnable() {
 
 			@Override
@@ -279,50 +292,31 @@ public class FitNewsActivity extends ListActivity {
 					mFitItems = ConsumerWebServices.getInstance()
 							.getFitNewsData("20", "1");
 					if (mFitItems.isEmpty()) {
-						mHideProgressDialogHandler.sendEmptyMessage(0);
 						Toast.makeText(getApplicationContext(),
 								R.string.message_to_empty_fit_list,
 								Toast.LENGTH_LONG).show();
 					} else {
 						downloadImagesFitItems(mFitItems);
-						getListView().post(new Runnable() {
-
-							@Override
-							public void run() {
-								setListAdapter(new EfficientAdapter(
-										FitNewsActivity.this, mFitItems));
-								mHideProgressDialogHandler.sendEmptyMessage(0);
-							}
-						});
+						runOnUiThread(mNotifyAdapterListTask);
 					}
-
 				} catch (JSONException e) {
-					mHideProgressDialogHandler.sendEmptyMessage(0);
 					Toast.makeText(getApplicationContext(),
 							R.string.error_rest_full_service, Toast.LENGTH_LONG)
 							.show();
 					e.printStackTrace();
 				}
+
+				mHideProgressDialogHandler.sendEmptyMessage(0);
 			}
 		}).start();
 
+		// initialize the footer view list
+		View footerView = ((LayoutInflater) this
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(
+				R.layout.fit_list_footer, null, false);
+		this.getListView().addFooterView(footerView);
+		getListView().setFooterDividersEnabled(false);
 	}
-
-	private Handler mSetDataFitNewsHandler = new Handler() {
-		public void handleMessage(android.os.Message msg) {
-
-			if (mFitItems.isEmpty()) {
-				Toast.makeText(getApplicationContext(),
-						R.string.message_to_empty_fit_list, Toast.LENGTH_LONG)
-						.show();
-				// TODO set empty the list
-			} else {
-				setListAdapter(new EfficientAdapter(FitNewsActivity.this,
-						mFitItems));
-			}
-			mHideProgressDialogHandler.sendEmptyMessage(0);
-		};
-	};
 
 	final private Handler mHideProgressDialogHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
@@ -332,6 +326,7 @@ public class FitNewsActivity extends ListActivity {
 
 	};
 
+	/** Download images from Fit items list from their urls */
 	protected void downloadImagesFitItems(ArrayList<FitItem> fitItems) {
 		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.3);
 
@@ -358,6 +353,10 @@ public class FitNewsActivity extends ListActivity {
 		}
 	}
 
+	/**
+	 * AsynckTask to does the job of update the list when the user makes pulling
+	 * to refresh
+	 */
 	private class GetFitItemsWhenPullingToRefreshTask extends
 			AsyncTask<Void, Void, Void> {
 
@@ -402,6 +401,7 @@ public class FitNewsActivity extends ListActivity {
 		}
 	}
 
+	/** Thread to does the job of searches by tag */
 	class ProcessSearchingPostsByTag extends Thread {
 		String tag;
 		String count;
@@ -421,18 +421,10 @@ public class FitNewsActivity extends ListActivity {
 				if (!newFits.isEmpty()) {
 					mFitItems = newFits;
 					downloadImagesFitItems(mFitItems);
-					getListView().post(new Runnable() {
-
-						@Override
-						public void run() {
-							((BaseAdapter) getListAdapter())
-									.notifyDataSetChanged();
-						}
-					});
-
+					runOnUiThread(mNotifyAdapterListTask);
 				} else {
 					Toast.makeText(FitNewsActivity.this, "No posts by " + tag,
-							Toast.LENGTH_LONG).show();
+							Toast.LENGTH_SHORT).show();
 				}
 			} catch (JSONException e) {
 				Toast.makeText(FitNewsActivity.this, e.getMessage(),
@@ -449,6 +441,7 @@ public class FitNewsActivity extends ListActivity {
 
 	}
 
+	/** Thread to does the job of searches by query */
 	class ProcessSearchingPostsByQuery extends Thread {
 
 		String query;
@@ -470,14 +463,7 @@ public class FitNewsActivity extends ListActivity {
 				if (!newFits.isEmpty()) {
 					mFitItems = newFits;
 					downloadImagesFitItems(mFitItems);
-					getListView().post(new Runnable() {
-
-						@Override
-						public void run() {
-							((BaseAdapter) getListAdapter())
-									.notifyDataSetChanged();
-						}
-					});
+					runOnUiThread(mNotifyAdapterListTask);
 				} else {
 					Toast.makeText(FitNewsActivity.this,
 							"No posts by " + query, Toast.LENGTH_LONG).show();
@@ -488,17 +474,48 @@ public class FitNewsActivity extends ListActivity {
 
 			}
 			mHideProgressDialogHandler.sendEmptyMessage(0);
-			Looper.loop();	
+			Looper.loop();
 		}
 
 		@Override
 		public void run() {
 			Looper.prepare();
 			processSearching();
-			mHideProgressDialogHandler.getLooper().quit();		
+			mHideProgressDialogHandler.getLooper().quit();
 		}
 
 	}
+
+	private OnLoadMoreListener mOnLoadMoreListener = new OnLoadMoreListener() {
+
+		@Override
+		public void onLoadMore() {
+			new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+
+					try {
+						final ArrayList<FitItem> newFits = ConsumerWebServices
+								.getInstance().getFitNewsData("20", "1");
+						if (!newFits.isEmpty()) {
+							downloadImagesFitItems(newFits);
+							mFitItems.addAll(newFits);
+							runOnUiThread(mNotifyAdapterListTask);
+						} else {
+							Toast.makeText(FitNewsActivity.this,
+									"No more fit news to load",
+									Toast.LENGTH_SHORT).show();
+						}
+					} catch (JSONException e) {
+						Toast.makeText(FitNewsActivity.this, e.getMessage(),
+								Toast.LENGTH_LONG);
+					}
+
+				}
+			}).start();
+		}
+	};
 
 	private ProgressDialog buildProgressDialog(String msg,
 			boolean isCancelable, boolean isIndeterminate) {
@@ -510,6 +527,14 @@ public class FitNewsActivity extends ListActivity {
 
 		return progressDialog;
 	}
+
+	private Runnable mNotifyAdapterListTask = new Runnable() {
+
+		@Override
+		public void run() {
+			((BaseAdapter) getListAdapter()).notifyDataSetChanged();
+		}
+	};
 
 	private ProgressDialog mProgressDialog;
 	private TextView mTextSearch;

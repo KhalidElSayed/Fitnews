@@ -41,17 +41,13 @@
         android:layout_height="fill_parent"
         android:layout_below="@+id/search_bar"
         android:clickable="true"
-        android:divider="@drawable/list_divider_line"
+        android:divider="@color/slate_blue"
         android:dividerHeight="1dp">
     </com.kogi.fitnews.PullToRefreshListView>
 
-    <TextView
-        android:id="@android:id/empty"
+    <TextView android:id="@android:id/empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:background="#FF0000"
-        android:text="No data"
-        android:visibility="invisible" />
-
+        android:text=""/>
 </RelativeLayout>

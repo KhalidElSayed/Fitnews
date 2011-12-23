@@ -17,6 +17,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.AbsListView.OnScrollListener;
+import android.widget.Toast;
 
 import com.kogi.fitnews.R;
 
@@ -30,6 +31,11 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 	private static final String TAG = "PullToRefreshListView";
 
 	private OnRefreshListener mOnRefreshListener;
+
+	// Listener to process load more items when user reaches the end of the list
+	private OnLoadMoreListener mOnLoadMoreListener;
+	// To know if the list is loading more items
+	private boolean mIsLoadingMore = false;
 
 	/**
 	 * Listener that will receive notifications every time the list scrolls.
@@ -146,6 +152,18 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 	 */
 	public void setOnRefreshListener(OnRefreshListener onRefreshListener) {
 		mOnRefreshListener = onRefreshListener;
+	}
+
+	/**
+	 * Register a callback to be invoked when this list reaches the end (last
+	 * item be visible)
+	 * 
+	 * @param onLoadMoreListener
+	 *            The callback to run.
+	 */
+
+	public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
+		mOnLoadMoreListener = onLoadMoreListener;
 	}
 
 	/**
@@ -314,6 +332,17 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 			mOnScrollListener.onScroll(view, firstVisibleItem,
 					visibleItemCount, totalItemCount);
 		}
+
+		// no need a list to load more items
+		if (mOnLoadMoreListener != null) {
+			boolean loadMore = firstVisibleItem + visibleItemCount >= totalItemCount;
+
+			if (!mIsLoadingMore && loadMore && mRefreshState != REFRESHING
+					&& mCurrentScrollState != SCROLL_STATE_IDLE) {
+				onLoadMore();
+
+			}
+		}
 	}
 
 	@Override
@@ -348,6 +377,15 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 
 		if (mOnRefreshListener != null) {
 			mOnRefreshListener.onRefresh();
+		}
+	}
+
+	public void onLoadMore() {
+		Log.d(TAG, "onLoadMore");
+		if (mOnLoadMoreListener != null) {
+			mIsLoadingMore = true;
+			mOnLoadMoreListener.onLoadMore();
+			mIsLoadingMore = false;
 		}
 	}
 
@@ -407,5 +445,17 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		 * expected to indicate that the refresh has completed.
 		 */
 		public void onRefresh();
+	}
+
+	/**
+	 * Interface definition for a callback to be invoked when list reaches the
+	 * last item (the user load more items in the list)
+	 */
+	public interface OnLoadMoreListener {
+		/**
+		 * Called when the list reaches the last item (the last item is visible
+		 * to the user)
+		 */
+		public void onLoadMore();
 	}
 }
