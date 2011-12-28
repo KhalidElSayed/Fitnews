@@ -1,6 +1,5 @@
 package com.kogi.fitnews;
 
-import java.security.KeyStore.LoadStoreParameter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,14 +32,11 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.SlidingDrawer;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -280,7 +276,14 @@ public class FitNewsActivity extends ListActivity {
 				});
 		// set a listener to be invoged when the list reaches the end
 		((PullToRefreshListView) getListView())
-				.setOnLoadMoreListener(mOnLoadMoreListener);
+				.setOnLoadMoreListener(new OnLoadMoreListener() {
+					
+					@Override
+					public void onLoadMore() {
+						new OnLoadMoreTask().execute();
+						
+					}
+				});
 
 		// TODO uses internet manager to detect the network state
 		// load initial posts
@@ -310,12 +313,6 @@ public class FitNewsActivity extends ListActivity {
 			}
 		}).start();
 
-		// initialize the footer view list
-		View footerView = ((LayoutInflater) this
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(
-				R.layout.fit_list_footer, null, false);
-		this.getListView().addFooterView(footerView);
-		getListView().setFooterDividersEnabled(false);
 	}
 
 	final private Handler mHideProgressDialogHandler = new Handler() {
@@ -486,36 +483,48 @@ public class FitNewsActivity extends ListActivity {
 
 	}
 
-	private OnLoadMoreListener mOnLoadMoreListener = new OnLoadMoreListener() {
+	private class OnLoadMoreTask extends AsyncTask<Void, Void, Void> {
 
 		@Override
-		public void onLoadMore() {
-			new Thread(new Runnable() {
+		protected Void doInBackground(Void... params) {
 
-				@Override
-				public void run() {
+			if (isCancelled()) {
+				return null;
+			}
 
-					try {
-						final ArrayList<FitItem> newFits = ConsumerWebServices
-								.getInstance().getFitNewsData("20", "1");
-						if (!newFits.isEmpty()) {
-							downloadImagesFitItems(newFits);
-							mFitItems.addAll(newFits);
-							runOnUiThread(mNotifyAdapterListTask);
-						} else {
-							Toast.makeText(FitNewsActivity.this,
-									"No more fit news to load",
-									Toast.LENGTH_SHORT).show();
-						}
-					} catch (JSONException e) {
-						Toast.makeText(FitNewsActivity.this, e.getMessage(),
-								Toast.LENGTH_LONG);
-					}
-
+			try {
+				final ArrayList<FitItem> newFits = ConsumerWebServices
+						.getInstance().getFitNewsData("20", "1");
+				if (!newFits.isEmpty()) {
+					downloadImagesFitItems(newFits);
+					mFitItems.addAll(newFits);
+					runOnUiThread(mNotifyAdapterListTask);
+				} else {
+					Toast.makeText(FitNewsActivity.this,
+							"No more fit news to load", Toast.LENGTH_SHORT)
+							.show();
 				}
-			}).start();
+			} catch (JSONException e) {
+			}
+			return null;
 		}
-	};
+
+		@Override
+		protected void onPostExecute(Void result) {
+
+			// Notify the loading more operation has finished
+			((PullToRefreshListView) getListView()).onLoadingMoreComplete();
+
+			super.onPostExecute(result);
+		}
+
+		@Override
+		protected void onCancelled() {
+			// Notify the loading more operation has finished
+			((PullToRefreshListView) getListView()).onLoadingMoreComplete();
+		}
+
+	}
 
 	private ProgressDialog buildProgressDialog(String msg,
 			boolean isCancelable, boolean isIndeterminate) {

@@ -4,7 +4,7 @@
     android:layout_height="fill_parent" >
 
     <TextView
-        android:id="@+id/lab_load_more"
+        android:id="@+id/load_more_lab_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
@@ -14,7 +14,7 @@
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <ProgressBar
-        android:id="@+id/progressBar"
+        android:id="@+id/load_more_progressBar"
         style="?android:attr/progressBarStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

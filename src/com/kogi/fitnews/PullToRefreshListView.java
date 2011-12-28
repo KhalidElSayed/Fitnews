@@ -17,7 +17,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.AbsListView.OnScrollListener;
-import android.widget.Toast;
 
 import com.kogi.fitnews.R;
 
@@ -43,12 +42,19 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 	private OnScrollListener mOnScrollListener;
 	private LayoutInflater mInflater;
 
+	//header
 	private RelativeLayout mRefreshView;
 	private TextView mRefreshViewText;
 	private ImageView mRefreshViewImage;
 	private ProgressBar mRefreshViewProgress;
 	private TextView mRefreshViewLastUpdated;
 
+	//footer
+	private RelativeLayout mFooterView;
+	private TextView mLabLoadMore;
+	private ProgressBar mProgressBarLoadMore;
+	
+	
 	private int mCurrentScrollState;
 	private int mRefreshState;
 
@@ -95,6 +101,7 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		mInflater = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
+		//header
 		mRefreshView = (RelativeLayout) mInflater.inflate(
 				R.layout.pull_to_refresh_header, this, false);
 		mRefreshViewText = (TextView) mRefreshView
@@ -106,6 +113,11 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		mRefreshViewLastUpdated = (TextView) mRefreshView
 				.findViewById(R.id.pull_to_refresh_updated_at);
 
+		//footer
+		mFooterView = (RelativeLayout)mInflater.inflate(R.layout.load_more_footer, this, false);
+		mLabLoadMore = (TextView) findViewById(R.id.lab_load_more);
+		mProgressBarLoadMore = (ProgressBar) findViewById(R.id.load_more_progressBar);
+		
 		mRefreshViewImage.setMinimumHeight(50);
 		mRefreshView.setOnClickListener(new OnClickRefreshListener());
 		mRefreshOriginalTopPadding = mRefreshView.getPaddingTop();
@@ -113,7 +125,9 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		mRefreshState = TAP_TO_REFRESH;
 
 		addHeaderView(mRefreshView);
-
+		addFooterView(mFooterView);
+		setFooterDividersEnabled(false);
+		
 		super.setOnScrollListener(this);
 
 		measureView(mRefreshView);
@@ -339,8 +353,8 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 
 			if (!mIsLoadingMore && loadMore && mRefreshState != REFRESHING
 					&& mCurrentScrollState != SCROLL_STATE_IDLE) {
+				mIsLoadingMore = true;
 				onLoadMore();
-
 			}
 		}
 	}
@@ -383,9 +397,7 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 	public void onLoadMore() {
 		Log.d(TAG, "onLoadMore");
 		if (mOnLoadMoreListener != null) {
-			mIsLoadingMore = true;
 			mOnLoadMoreListener.onLoadMore();
-			mIsLoadingMore = false;
 		}
 	}
 
@@ -414,6 +426,15 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 			invalidateViews();
 			setSelection(1);
 		}
+	}
+
+	/**
+	 * Notify the loading more operation has finished
+	 */
+	public void onLoadingMoreComplete() {
+		mIsLoadingMore = false;
+		//mCurrentScrollState = SCROLL_STATE_IDLE;
+		
 	}
 
 	/**
