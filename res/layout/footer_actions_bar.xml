@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/prev_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:padding="1dp"
+        android:src="@drawable/bar_icon_previous" />
+
+    <ImageView
+        android:id="@+id/save_pic_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/prev_action"
+        android:padding="1dp"
+        android:src="@drawable/bar_icon_save_pic" />
+
+    <ImageView
+        android:id="@+id/share_facebook_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/save_pic_action"
+        android:padding="1dp"
+        android:src="@drawable/bar_icon_face" />
+
+    <ImageView
+        android:id="@+id/share_twetter_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/share_facebook_action"
+        android:padding="1dp"
+        android:src="@drawable/bar_icon_twetter" />
+
+    <ImageView
+        android:id="@+id/next_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/share_twetter_action"
+        android:padding="1dp"
+        android:src="@drawable/bar_icon_next" />
+
+</RelativeLayout>

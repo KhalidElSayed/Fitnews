@@ -1,6 +1,7 @@
 package com.kogi.fitnews;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.json.JSONException;
@@ -32,6 +33,8 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -120,8 +123,8 @@ public class FitNewsActivity extends ListActivity {
 			// TODO manage the images in cache
 			FitItem fitItem = mFitItems.get(position);
 
-			if (fitItem.getImageFull() != null) {
-				holder.imgNews.setImageBitmap(fitItem.getImageFull());
+			if (fitItem.getInitImage() != null) {
+				holder.imgNews.setImageBitmap(fitItem.getInitImage());
 			} else {
 				holder.imgNews.setImageResource(R.drawable.no_data);
 			}
@@ -274,14 +277,26 @@ public class FitNewsActivity extends ListActivity {
 
 					}
 				});
-		// set a listener to be invoged when the list reaches the end
+		// set a listener to be invoked when the list reaches the end
 		((PullToRefreshListView) getListView())
 				.setOnLoadMoreListener(new OnLoadMoreListener() {
-					
+
 					@Override
 					public void onLoadMore() {
 						new OnLoadMoreTask().execute();
-						
+
+					}
+				});
+
+		// set a listener to be invoked when the user choose one item from the
+		// list
+		((PullToRefreshListView) getListView())
+				.setOnItemClickListener(new OnItemClickListener() {
+
+					@Override
+					public void onItemClick(AdapterView<?> adapter, View view,
+							int pos, long id) {
+
 					}
 				});
 
@@ -299,7 +314,7 @@ public class FitNewsActivity extends ListActivity {
 								R.string.message_to_empty_fit_list,
 								Toast.LENGTH_LONG).show();
 					} else {
-						downloadImagesFitItems(mFitItems);
+						downloadInitImagesFitItems(mFitItems);
 						runOnUiThread(mNotifyAdapterListTask);
 					}
 				} catch (JSONException e) {
@@ -323,23 +338,53 @@ public class FitNewsActivity extends ListActivity {
 
 	};
 
-	/** Download images from Fit items list from their urls */
-	protected void downloadImagesFitItems(ArrayList<FitItem> fitItems) {
+	/** Download the initial images from Fit items list from their urls */
+	protected void downloadInitImagesFitItems(ArrayList<FitItem> fitItems) {
 		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.3);
 
 		for (FitItem fitItem : fitItems) {
-			String urlImage = fitItem.getUrlImage();
+			String urlImage = fitItem.getUrlInitImage();
 			if (urlImage != null && !urlImage.equals("")) {
 
 				boolean finished = false;
 				int intentos = 1;
 				while (!finished && intentos <= 2) {
 					Bitmap bmp = DecoderImages.getBitmapFromURL(fitItem
-							.getUrlImage());
+							.getUrlInitImage());
 					if (bmp != null) {
 						Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
 								width);
-						fitItem.setImageFull(bmpResized);
+						fitItem.setInitImage(bmpResized);
+						finished = true;
+					} else {
+						intentos++;
+					}
+
+				}
+			}
+		}
+	}
+
+	/**
+	 * Download the carousel images from chosen Fit item from its images urls
+	 * list
+	 */
+	protected void downloadImagesFitItem(FitItem fitItem) {
+		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.9);
+		ArrayList<String> urls = fitItem.getUrlsImages();
+
+		for (int i = 0; i < urls.size(); i++) {
+			String urlImage = urls.get(i);
+			if (urlImage != null && !urlImage.equals("")) {
+				boolean finished = false;
+				int intentos = 1;
+
+				while (!finished && intentos <= 2) {
+					Bitmap bmp = DecoderImages.getBitmapFromURL(urlImage);
+					if (bmp != null) {
+						Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
+								width);
+						fitItem.getImages().add(i, bmpResized);
 						finished = true;
 					} else {
 						intentos++;
@@ -370,7 +415,7 @@ public class FitNewsActivity extends ListActivity {
 				newFitItemsList = ConsumerWebServices.getInstance()
 						.getFitNewsData("20", "1");
 				if (!newFitItemsList.isEmpty()) {
-					downloadImagesFitItems(newFitItemsList);
+					downloadInitImagesFitItems(newFitItemsList);
 				}
 			} catch (JSONException e) {
 			}
@@ -417,7 +462,7 @@ public class FitNewsActivity extends ListActivity {
 						.getInstance().getFitNewsDataByTag(tag, count, page);
 				if (!newFits.isEmpty()) {
 					mFitItems = newFits;
-					downloadImagesFitItems(mFitItems);
+					downloadInitImagesFitItems(mFitItems);
 					runOnUiThread(mNotifyAdapterListTask);
 				} else {
 					Toast.makeText(FitNewsActivity.this, "No posts by " + tag,
@@ -459,7 +504,7 @@ public class FitNewsActivity extends ListActivity {
 						.getFitNewsDataByQuery(query, count, page);
 				if (!newFits.isEmpty()) {
 					mFitItems = newFits;
-					downloadImagesFitItems(mFitItems);
+					downloadInitImagesFitItems(mFitItems);
 					runOnUiThread(mNotifyAdapterListTask);
 				} else {
 					Toast.makeText(FitNewsActivity.this,
@@ -496,7 +541,7 @@ public class FitNewsActivity extends ListActivity {
 				final ArrayList<FitItem> newFits = ConsumerWebServices
 						.getInstance().getFitNewsData("20", "1");
 				if (!newFits.isEmpty()) {
-					downloadImagesFitItems(newFits);
+					downloadInitImagesFitItems(newFits);
 					mFitItems.addAll(newFits);
 					runOnUiThread(mNotifyAdapterListTask);
 				} else {
@@ -542,6 +587,7 @@ public class FitNewsActivity extends ListActivity {
 		@Override
 		public void run() {
 			((BaseAdapter) getListAdapter()).notifyDataSetChanged();
+			getListView().setSelection(1);
 		}
 	};
 

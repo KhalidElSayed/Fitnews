@@ -1,6 +1,7 @@
 package com.kogi.model;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import android.graphics.Bitmap;
 
@@ -9,22 +10,21 @@ public class FitItem {
 	private int id;
 	private String titlePlain;
 	private String excerpt;
-	private String urlImage;
-	private Bitmap imageFull;
+	private String content;
+	private String urlContent;
+	private Date date;
+	// initial image (fits item list)
+	private String urlInitImage;
+	private Bitmap initImage;
+	// carousel images
+	private ArrayList<String> urlsImages;
+	private ArrayList<Bitmap> images;
 	private ArrayList<String> tags;
 
 	public FitItem() {
 		tags = new ArrayList<String>();
-	}
-
-	public FitItem(int id, String titlePlain, String excerpt, String urlImage,
-			ArrayList<String> tags) {
-		super();
-		this.id = id;
-		this.titlePlain = titlePlain;
-		this.excerpt = excerpt;
-		this.urlImage = urlImage;
-		this.tags = tags;
+		urlsImages = new ArrayList<String>();
+		images = new ArrayList<Bitmap>();
 	}
 
 	public int getId() {
@@ -51,12 +51,52 @@ public class FitItem {
 		this.excerpt = excerpt;
 	}
 
-	public String getUrlImage() {
-		return urlImage;
+	public String getContent() {
+		return content;
 	}
 
-	public void setUrlImage(String urlImage) {
-		this.urlImage = urlImage;
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public String getUrlContent() {
+		return urlContent;
+	}
+
+	public void setUrlContent(String urlContent) {
+		this.urlContent = urlContent;
+	}
+
+	public String getUrlInitImage() {
+		return urlInitImage;
+	}
+
+	public void setUrlInitImage(String urlImage) {
+		this.urlInitImage = urlImage;
+	}
+
+	public ArrayList<Bitmap> getImages() {
+		return images;
+	}
+
+	public void setImages(ArrayList<Bitmap> images) {
+		this.images = images;
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
+	public ArrayList<String> getUrlsImages() {
+		return urlsImages;
+	}
+
+	public void setUrlsImages(ArrayList<String> urlsImages) {
+		this.urlsImages = urlsImages;
 	}
 
 	public ArrayList<String> getTags() {
@@ -67,12 +107,12 @@ public class FitItem {
 		this.tags = tags;
 	}
 
-	public Bitmap getImageFull() {
-		return imageFull;
+	public Bitmap getInitImage() {
+		return initImage;
 	}
 
-	public void setImageFull(Bitmap imageFull) {
-		this.imageFull = imageFull;
+	public void setInitImage(Bitmap imageFull) {
+		this.initImage = imageFull;
 	}
 
 }

@@ -10,4 +10,5 @@
     <color name="green">#008000</color>
 	<color name="light_sky">#87AFC7</color>
 	<color name="slate_blue">#357EC7</color>
+	<color name="dark_slate_gray">#2F4F4F</color>
 </resources>

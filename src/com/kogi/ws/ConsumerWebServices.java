@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -41,7 +44,7 @@ public class ConsumerWebServices {
 	public ArrayList<FitItem> getFitNewsData(String count, String page)
 			throws JSONException {
 
-		// make the web service´s url
+		// make the web services url
 		String url = URL_GET_FIT_NEWS + "count=" + count + "&page=" + page;
 		ArrayList<FitItem> fitItems;
 		try {
@@ -140,6 +143,8 @@ public class ConsumerWebServices {
 		}
 
 		ArrayList<FitItem> fitItems = new ArrayList<FitItem>();
+		DateFormat dateFormat = DateFormat.getDateTimeInstance(
+				DateFormat.SHORT, DateFormat.SHORT);
 
 		for (int i = 0; i < postItems.length(); i++) {
 
@@ -157,6 +162,25 @@ public class ConsumerWebServices {
 				if (!excerpt.equals(""))
 					fitItem.setExcerpt(excerpt);
 
+				String content = postItem.getString("content");
+				if (!content.equals(""))
+					fitItem.setContent(content);
+
+				String urlContent = postItem.getString("url");
+				if (!content.equals(""))
+					fitItem.setContent(urlContent);
+
+				String dateString = postItem.getString("date");
+				if (!dateString.equals("")) {
+					try {
+						fitItem.setDate(dateFormat.parse(dateString));
+					} catch (ParseException e) {
+						fitItem.setDate(new Date());
+					}
+				} else {
+					// TODO set date to null and verify this on the UI
+					fitItem.setDate(new Date());
+				}
 				// get tags from a post
 				JSONArray tagsItems = postItem.getJSONArray("tags");
 				for (int j = 0; j < tagsItems.length(); j++) {
@@ -164,18 +188,20 @@ public class ConsumerWebServices {
 					fitItem.getTags().add(tagItem.getString("slug"));
 				}
 
-				// get an attachment from a post
+				// get the attachments from a post
 				JSONArray attachmentItems = postItem
 						.getJSONArray("attachments");
-				if (attachmentItems.length() != 0) {
-					JSONObject attachment = attachmentItems.getJSONObject(0);
+				for (int j = 0; j < attachmentItems.length(); j++) {
+					JSONObject attachment = attachmentItems.getJSONObject(j);
 					JSONObject images = attachment.getJSONObject("images");
 					JSONObject full = images.getJSONObject("full");
 					String urlImageFull = full.getString("url");
-
-					if (!urlImageFull.equals("")) {
-						fitItem.setUrlImage(urlImageFull);
+					
+					if(j==0){
+						fitItem.setUrlInitImage(urlImageFull);
 					}
+						
+						fitItem.getUrlsImages().add(j, urlImageFull);
 				}
 
 				// add fitItem to the list of fitItems
