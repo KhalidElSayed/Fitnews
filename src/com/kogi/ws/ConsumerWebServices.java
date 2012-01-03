@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -143,8 +144,7 @@ public class ConsumerWebServices {
 		}
 
 		ArrayList<FitItem> fitItems = new ArrayList<FitItem>();
-		DateFormat dateFormat = DateFormat.getDateTimeInstance(
-				DateFormat.SHORT, DateFormat.SHORT);
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
 
 		for (int i = 0; i < postItems.length(); i++) {
 
@@ -167,13 +167,13 @@ public class ConsumerWebServices {
 					fitItem.setContent(content);
 
 				String urlContent = postItem.getString("url");
-				if (!content.equals(""))
-					fitItem.setContent(urlContent);
+				if (!urlContent.equals(""))
+					fitItem.setUrlContent(urlContent);
 
 				String dateString = postItem.getString("date");
 				if (!dateString.equals("")) {
 					try {
-						fitItem.setDate(dateFormat.parse(dateString));
+						fitItem.setDate(simpleDateFormat.parse(dateString));
 					} catch (ParseException e) {
 						fitItem.setDate(new Date());
 					}
@@ -196,12 +196,12 @@ public class ConsumerWebServices {
 					JSONObject images = attachment.getJSONObject("images");
 					JSONObject full = images.getJSONObject("full");
 					String urlImageFull = full.getString("url");
-					
-					if(j==0){
+
+					if (j == 0) {
 						fitItem.setUrlInitImage(urlImageFull);
 					}
-						
-						fitItem.getUrlsImages().add(j, urlImageFull);
+
+					fitItem.getUrlsImages().add(j, urlImageFull);
 				}
 
 				// add fitItem to the list of fitItems

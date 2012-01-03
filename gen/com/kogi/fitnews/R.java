@@ -33,15 +33,15 @@ public final class R {
         public static final int ic_launcher=0x7f020007;
         public static final int ic_pulltorefresh_arrow=0x7f020008;
         public static final int list_divider_line=0x7f020009;
-        public static final int no_data=0x7f02000a;
-        public static final int no_images=0x7f02000b;
+        public static final int no_images=0x7f02000a;
+        public static final int no_images_small=0x7f02000b;
     }
     public static final class id {
-        public static final int action_bar=0x7f070003;
+        public static final int action_bar=0x7f070004;
         public static final int img_item_detail=0x7f070002;
         public static final int img_new_item_list_fit=0x7f070006;
         public static final int img_search_action=0x7f07000c;
-        public static final int lab_content=0x7f070004;
+        public static final int lab_content=0x7f070003;
         public static final int lab_date=0x7f070001;
         public static final int lab_detail_item_list_fit=0x7f070007;
         public static final int lab_load_more=0x7f070015;
@@ -86,6 +86,7 @@ public final class R {
         public static final int text_hint_search=0x7f050008;
     }
     public static final class style {
+        public static final int lab_content=0x7f060003;
         public static final int lab_detail_fit_news=0x7f060002;
         public static final int lab_tags_fit_news=0x7f060000;
         public static final int lab_title_fit_news=0x7f060001;

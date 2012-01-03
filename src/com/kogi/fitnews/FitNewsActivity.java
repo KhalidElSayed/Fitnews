@@ -1,7 +1,6 @@
 package com.kogi.fitnews;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.json.JSONException;
@@ -17,6 +16,7 @@ import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -33,8 +33,6 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -53,12 +51,10 @@ public class FitNewsActivity extends ListActivity {
 
 		protected int screenWidth;
 
-		private EfficientAdapter(Context context,
-				ArrayList<FitItem> fitItemsList) {
+		private EfficientAdapter(Context context) {
 
 			mInflater = LayoutInflater.from(context);
 			mContext = context;
-			mFitItems = fitItemsList;
 			mDisplayMetrics = new DisplayMetrics();
 			((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
 					.getDefaultDisplay().getMetrics(mDisplayMetrics);
@@ -102,6 +98,8 @@ public class FitNewsActivity extends ListActivity {
 				layoutParams.addRule(RelativeLayout.ALIGN_TOP,
 						R.id.lab_detail_item_list_fit);
 				holder.imgNews.setLayoutParams(layoutParams);
+				holder.imgNews
+						.setOnClickListener(new OnItemClickAction(holder));
 
 				holder.labTitle = (TextView) convertView
 						.findViewById(R.id.lab_title_item_list_fit);
@@ -122,11 +120,13 @@ public class FitNewsActivity extends ListActivity {
 			// set the list fit item data
 			// TODO manage the images in cache
 			FitItem fitItem = mFitItems.get(position);
+			//update the position on the tag
+			holder.imgNews.setTag(position);
 
 			if (fitItem.getInitImage() != null) {
 				holder.imgNews.setImageBitmap(fitItem.getInitImage());
 			} else {
-				holder.imgNews.setImageResource(R.drawable.no_data);
+				holder.imgNews.setImageResource(R.drawable.no_images_small);
 			}
 
 			holder.labTitle.setText(fitItem.getTitlePlain());
@@ -221,6 +221,24 @@ public class FitNewsActivity extends ListActivity {
 			}
 			return convertView;
 		}
+
+		private class OnItemClickAction implements OnClickListener {
+			final ViewHolder holder;
+
+			public OnItemClickAction(ViewHolder viewHolder) {
+				holder = viewHolder;
+			}
+
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent(FitNewsActivity.this,
+						ItemDetailActivity.class);
+				i.putExtra(ITEM_SELECTED, (Integer) holder.imgNews.getTag());
+				
+				startActivity(i);
+			}
+
+		}
 	}
 
 	static class ViewHolder {
@@ -259,13 +277,6 @@ public class FitNewsActivity extends ListActivity {
 			}
 		});
 
-		mProgressDialog = buildProgressDialog("Searching news on the web...",
-				false, true);
-		mProgressDialog.show();
-
-		mFitItems = new ArrayList<FitItem>();
-		setListAdapter(new EfficientAdapter(FitNewsActivity.this, mFitItems));
-
 		// Set a listener to be invoked when the list should be refreshed.
 		((PullToRefreshListView) getListView())
 				.setOnRefreshListener(new OnRefreshListener() {
@@ -288,46 +299,56 @@ public class FitNewsActivity extends ListActivity {
 					}
 				});
 
-		// set a listener to be invoked when the user choose one item from the
-		// list
-		((PullToRefreshListView) getListView())
-				.setOnItemClickListener(new OnItemClickListener() {
+		if (MyApplication.getInstance().getFitItemsList() == null) {
+			mFitItems = new ArrayList<FitItem>();
+			setListAdapter(new EfficientAdapter(FitNewsActivity.this));
+			mProgressDialog = buildProgressDialog(
+					"Searching news on the web...", false, true);
+			mProgressDialog.show();
 
-					@Override
-					public void onItemClick(AdapterView<?> adapter, View view,
-							int pos, long id) {
+			// TODO uses internet manager to detect the network state
+			// check if the fit items list is not null before to launch the
+			// thread
+			// load initial posts
+			new Thread(new Runnable() {
 
-					}
-				});
-
-		// TODO uses internet manager to detect the network state
-		// load initial posts
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					mFitItems = ConsumerWebServices.getInstance()
-							.getFitNewsData("20", "1");
-					if (mFitItems.isEmpty()) {
+				@Override
+				public void run() {
+					try {
+						mFitItems = ConsumerWebServices.getInstance()
+								.getFitNewsData("20", "1");
+						if (mFitItems.isEmpty()) {
+							Toast.makeText(getApplicationContext(),
+									R.string.message_to_empty_fit_list,
+									Toast.LENGTH_LONG).show();
+						} else {
+							downloadInitImagesFitItems(mFitItems);
+							runOnUiThread(mNotifyAdapterListTask);
+						}
+					} catch (JSONException e) {
 						Toast.makeText(getApplicationContext(),
-								R.string.message_to_empty_fit_list,
+								R.string.error_rest_full_service,
 								Toast.LENGTH_LONG).show();
-					} else {
-						downloadInitImagesFitItems(mFitItems);
-						runOnUiThread(mNotifyAdapterListTask);
+						e.printStackTrace();
 					}
-				} catch (JSONException e) {
-					Toast.makeText(getApplicationContext(),
-							R.string.error_rest_full_service, Toast.LENGTH_LONG)
-							.show();
-					e.printStackTrace();
+
+					mHideProgressDialogHandler.sendEmptyMessage(0);
 				}
+			}).start();
+		} else if (!MyApplication.getInstance().getFitItemsList().isEmpty()) {
+			mProgressDialog = buildProgressDialog("Loading data...", false,
+					true);
+			mProgressDialog.show();
+			mFitItems = MyApplication.getInstance().getFitItemsList();
+			setListAdapter(new EfficientAdapter(FitNewsActivity.this));
+			mHideProgressDialogHandler.sendEmptyMessage(0);
+		}
+	}
 
-				mHideProgressDialogHandler.sendEmptyMessage(0);
-			}
-		}).start();
-
+	@Override
+	protected void onPause() {
+		super.onPause();
+		MyApplication.getInstance().setFitItemsList(mFitItems);
 	}
 
 	final private Handler mHideProgressDialogHandler = new Handler() {
@@ -595,4 +616,6 @@ public class FitNewsActivity extends ListActivity {
 	private TextView mTextSearch;
 	private ImageView mImgSearchAction;
 	private ArrayList<FitItem> mFitItems;
+
+	public static String ITEM_SELECTED = "item_selected";
 }
