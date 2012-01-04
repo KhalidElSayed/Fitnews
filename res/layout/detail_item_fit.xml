@@ -10,6 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
+        android:gravity="center_horizontal"
         android:padding="1dp"
         android:text="title"
         android:textAppearance="?android:attr/textAppearanceLarge"
@@ -21,6 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/lab_title_item_detail"
         android:layout_centerHorizontal="true"
+        android:gravity="center_horizontal"
         android:padding="1dp"
         android:text="date"
         android:textAppearance="?android:attr/textAppearanceSmall" />
@@ -31,22 +33,20 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/lab_date"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="18dp"
-        android:scaleType="centerCrop"
-        android:adjustViewBounds="true"
         android:padding="3dp"
+        android:scaleType="centerCrop"
         android:src="@drawable/no_images" />
 
     <TextView
         android:id="@+id/lab_content"
+        style="@style/lab_content"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/img_item_detail"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:gravity="left|center"
-        style="@style/lab_content"
-        android:text="detail"/>
+        android:text="detail" />
 
     <include
         android:id="@+id/action_bar"

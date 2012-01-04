@@ -17,6 +17,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.AbsListView.OnScrollListener;
+import android.widget.Toast;
 
 import com.kogi.fitnews.R;
 
@@ -126,10 +127,10 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		mRefreshState = TAP_TO_REFRESH;
 
 		addHeaderView(mRefreshView);
-		
+
 		setFooterDividersEnabled(false);
 		addFooterView(mFooterView);
-		
+
 		super.setOnScrollListener(this);
 
 		measureView(mRefreshView);
@@ -351,8 +352,12 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 
 		// no need a list to load more items
 		if (mOnLoadMoreListener != null) {
-			boolean loadMore = firstVisibleItem + visibleItemCount >= totalItemCount;
 
+			if (visibleItemCount == totalItemCount)
+				Toast.makeText(getContext(), "Tap to load more",
+						Toast.LENGTH_SHORT).show();
+
+			boolean loadMore = firstVisibleItem + visibleItemCount >= totalItemCount;
 			if (!mIsLoadingMore && loadMore && mRefreshState != REFRESHING
 					&& mCurrentScrollState != SCROLL_STATE_IDLE) {
 				mIsLoadingMore = true;
@@ -372,6 +377,7 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		if (mOnScrollListener != null) {
 			mOnScrollListener.onScrollStateChanged(view, scrollState);
 		}
+
 	}
 
 	public void prepareForRefresh() {
