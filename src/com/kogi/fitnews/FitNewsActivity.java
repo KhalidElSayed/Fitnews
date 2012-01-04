@@ -8,6 +8,7 @@ import org.json.JSONException;
 import com.kogi.fitnews.PullToRefreshListView.OnLoadMoreListener;
 import com.kogi.fitnews.PullToRefreshListView.OnRefreshListener;
 import com.kogi.model.FitItem;
+import com.kogi.util.AppStatus;
 import com.kogi.util.DecoderImages;
 import com.kogi.ws.ConsumerWebServices;
 
@@ -113,14 +114,12 @@ public class FitNewsActivity extends ListActivity {
 				holder = (ViewHolder) convertView.getTag();
 				// clean all tags added to tagspanel
 				holder.tagsPanel.removeAllViews();
-				// clean the image fit
-				holder.imgNews.setImageDrawable(null);
 			}
 
 			// set the list fit item data
 			// TODO manage the images in cache
 			FitItem fitItem = mFitItems.get(position);
-			//update the position on the tag
+			// update the position on the tag
 			holder.imgNews.setTag(position);
 
 			if (fitItem.getInitImage() != null) {
@@ -137,7 +136,6 @@ public class FitNewsActivity extends ListActivity {
 
 			for (int i = 0; continuar && i < tags.size(); i++) {
 				final Button butTag = new Button(mContext);
-				butTag.setTextColor(R.color.red);
 				butTag.setTextAppearance(mContext, R.style.lab_tags_fit_news);
 
 				if (i == 2 && tags.size() >= 4) {
@@ -176,6 +174,18 @@ public class FitNewsActivity extends ListActivity {
 										public void onClick(
 												DialogInterface dialog, int id) {
 											dialog.dismiss();
+
+											// validate internet connection
+											// before do the task
+											if (!AppStatus
+													.isOnline(FitNewsActivity.this)) {
+												showToastMessage(
+														FitNewsActivity.this,
+														R.string.message_to_network_problem,
+														Toast.LENGTH_LONG);
+												return;
+											}
+
 											if (itemSelected.arg1 != -1) {
 
 												mProgressDialog = buildProgressDialog(
@@ -202,6 +212,14 @@ public class FitNewsActivity extends ListActivity {
 
 						@Override
 						public void onClick(View v) {
+							// validate internet connection before do the task
+							if (!AppStatus.isOnline(FitNewsActivity.this)) {
+								showToastMessage(FitNewsActivity.this,
+										R.string.message_to_network_problem,
+										Toast.LENGTH_LONG);
+								return;
+							}
+
 							mProgressDialog = buildProgressDialog(
 									"Searching posts by "
 											+ butTag.getText().toString(),
@@ -234,7 +252,7 @@ public class FitNewsActivity extends ListActivity {
 				Intent i = new Intent(FitNewsActivity.this,
 						ItemDetailActivity.class);
 				i.putExtra(ITEM_SELECTED, (Integer) holder.imgNews.getTag());
-				
+
 				startActivity(i);
 			}
 
@@ -255,6 +273,12 @@ public class FitNewsActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.fit_news_list);
 
+		if (!AppStatus.isOnline(FitNewsActivity.this)) {
+			TextView txt = (TextView) findViewById(android.R.id.empty);
+			txt.setText(R.string.message_to_network_problem);
+			return;
+		}
+
 		mTextSearch = (TextView) findViewById(R.id.txt_search);
 		mImgSearchAction = (ImageView) findViewById(R.id.img_search_action);
 		mImgSearchAction.setOnClickListener(new OnClickListener() {
@@ -269,6 +293,14 @@ public class FitNewsActivity extends ListActivity {
 						InputMethodManager.HIDE_NOT_ALWAYS);
 
 				if (!query.equals("")) {
+					// validate internet connection before do the task
+					if (!AppStatus.isOnline(FitNewsActivity.this)) {
+						showToastMessage(FitNewsActivity.this,
+								R.string.message_to_network_problem,
+								Toast.LENGTH_LONG);
+						return;
+					}
+
 					mProgressDialog = buildProgressDialog("Searching posts by "
 							+ query, false, true);
 					mProgressDialog.show();
@@ -283,7 +315,17 @@ public class FitNewsActivity extends ListActivity {
 
 					@Override
 					public void onRefresh() {
-						// Do work to refresh the list here.
+						// validate internet connection before do the task
+						if (!AppStatus.isOnline(FitNewsActivity.this)) {
+							// Call onRefreshComplete when the list has been
+							// refreshed.
+							((PullToRefreshListView) getListView())
+									.onRefreshComplete();
+							showToastMessage(FitNewsActivity.this,
+									R.string.message_to_network_problem,
+									Toast.LENGTH_LONG);
+							return;
+						}
 						new GetFitItemsWhenPullingToRefreshTask().execute();
 
 					}
@@ -294,11 +336,24 @@ public class FitNewsActivity extends ListActivity {
 
 					@Override
 					public void onLoadMore() {
+						// validate internet connection before do the task
+						if (!AppStatus.isOnline(FitNewsActivity.this)) {
+							// Notify the loading more operation has finished
+							((PullToRefreshListView) getListView())
+									.onLoadingMoreComplete();
+							
+							showToastMessage(FitNewsActivity.this,
+									R.string.message_to_network_problem,
+									Toast.LENGTH_LONG);
+							return;
+						}
 						new OnLoadMoreTask().execute();
 
 					}
 				});
 
+		// check if the fit items list is not null before to launch the
+		// thread
 		if (MyApplication.getInstance().getFitItemsList() == null) {
 			mFitItems = new ArrayList<FitItem>();
 			setListAdapter(new EfficientAdapter(FitNewsActivity.this));
@@ -306,9 +361,6 @@ public class FitNewsActivity extends ListActivity {
 					"Searching news on the web...", false, true);
 			mProgressDialog.show();
 
-			// TODO uses internet manager to detect the network state
-			// check if the fit items list is not null before to launch the
-			// thread
 			// load initial posts
 			new Thread(new Runnable() {
 
@@ -376,36 +428,6 @@ public class FitNewsActivity extends ListActivity {
 						Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
 								width);
 						fitItem.setInitImage(bmpResized);
-						finished = true;
-					} else {
-						intentos++;
-					}
-
-				}
-			}
-		}
-	}
-
-	/**
-	 * Download the carousel images from chosen Fit item from its images urls
-	 * list
-	 */
-	protected void downloadImagesFitItem(FitItem fitItem) {
-		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.9);
-		ArrayList<String> urls = fitItem.getUrlsImages();
-
-		for (int i = 0; i < urls.size(); i++) {
-			String urlImage = urls.get(i);
-			if (urlImage != null && !urlImage.equals("")) {
-				boolean finished = false;
-				int intentos = 1;
-
-				while (!finished && intentos <= 2) {
-					Bitmap bmp = DecoderImages.getBitmapFromURL(urlImage);
-					if (bmp != null) {
-						Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
-								width);
-						fitItem.getImages().add(i, bmpResized);
 						finished = true;
 					} else {
 						intentos++;
@@ -590,6 +612,10 @@ public class FitNewsActivity extends ListActivity {
 			((PullToRefreshListView) getListView()).onLoadingMoreComplete();
 		}
 
+	}
+
+	private void showToastMessage(Context ctx, int idMsg, int duration) {
+		Toast.makeText(ctx, idMsg, duration).show();
 	}
 
 	private ProgressDialog buildProgressDialog(String msg,

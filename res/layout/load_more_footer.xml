@@ -21,8 +21,8 @@
         style="?android:attr/progressBarStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/lab_load_more"
-        android:layout_toLeftOf="@+id/lab_load_more"
+        android:layout_alignBottom="@+id/load_more_lab_view"
+        android:layout_toLeftOf="@+id/load_more_lab_view"
         android:indeterminate="true"
         android:padding="3dp" />
 

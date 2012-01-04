@@ -34,7 +34,7 @@
         android:layout_below="@+id/lab_date"
         android:layout_centerHorizontal="true"
         android:padding="3dp"
-        android:scaleType="centerCrop"
+        android:scaleType="fitXY"
         android:src="@drawable/no_images" />
 
     <TextView

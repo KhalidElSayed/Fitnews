@@ -44,7 +44,6 @@ public final class R {
         public static final int lab_content=0x7f070003;
         public static final int lab_date=0x7f070001;
         public static final int lab_detail_item_list_fit=0x7f070007;
-        public static final int lab_load_more=0x7f070015;
         public static final int lab_title_item_detail=0x7f070000;
         public static final int lab_title_item_list_fit=0x7f070008;
         public static final int load_more_footer=0x7f070012;
@@ -52,11 +51,11 @@ public final class R {
         public static final int load_more_progressBar=0x7f070014;
         public static final int next_action=0x7f070011;
         public static final int prev_action=0x7f07000d;
-        public static final int pull_to_refresh_header=0x7f070016;
-        public static final int pull_to_refresh_image=0x7f070018;
-        public static final int pull_to_refresh_progress=0x7f070017;
-        public static final int pull_to_refresh_text=0x7f070019;
-        public static final int pull_to_refresh_updated_at=0x7f07001a;
+        public static final int pull_to_refresh_header=0x7f070015;
+        public static final int pull_to_refresh_image=0x7f070017;
+        public static final int pull_to_refresh_progress=0x7f070016;
+        public static final int pull_to_refresh_text=0x7f070018;
+        public static final int pull_to_refresh_updated_at=0x7f070019;
         public static final int root_fit_news_item_list=0x7f070005;
         public static final int save_pic_action=0x7f07000e;
         public static final int search_bar=0x7f07000a;
@@ -79,6 +78,7 @@ public final class R {
         public static final int hello=0x7f050000;
         public static final int load_more_post=0x7f050009;
         public static final int message_to_empty_fit_list=0x7f050002;
+        public static final int message_to_network_problem=0x7f05000a;
         public static final int pull_to_refresh_pull_label=0x7f050004;
         public static final int pull_to_refresh_refreshing_label=0x7f050006;
         public static final int pull_to_refresh_release_label=0x7f050005;
@@ -91,4 +91,25 @@ public final class R {
         public static final int lab_tags_fit_news=0x7f060000;
         public static final int lab_title_fit_news=0x7f060001;
     }
+    public static final class styleable {
+        /** Attributes that can be used with a HelloGallery.
+           <p>Includes the following attributes:</p>
+           <table>
+           <colgroup align="left" />
+           <colgroup align="left" />
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #HelloGallery_android_galleryItemBackground com.kogi.fitnews:android_galleryItemBackground}</code></td><td></td></tr>
+           </table>
+           @see #HelloGallery_android_galleryItemBackground
+         */
+        public static final int[] HelloGallery = {
+            0x0101004c
+        };
+        /**
+          <p>This symbol is the offset where the {@link com.kogi.fitnews.R.attr#android_galleryItemBackground}
+          attribute's value can be found in the {@link #HelloGallery} array.
+          @attr name android:android_galleryItemBackground
+        */
+        public static final int HelloGallery_android_galleryItemBackground = 0;
+    };
 }

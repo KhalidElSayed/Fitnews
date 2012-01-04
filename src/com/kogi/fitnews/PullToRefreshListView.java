@@ -116,7 +116,7 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		// footer
 		mFooterView = (RelativeLayout) mInflater.inflate(
 				R.layout.load_more_footer, this, false);
-		mLabLoadMore = (TextView) mFooterView.findViewById(R.id.lab_load_more);
+		mLabLoadMore = (TextView) mFooterView.findViewById(R.id.load_more_lab_view);
 		mProgressBarLoadMore = (ProgressBar) mFooterView
 				.findViewById(R.id.load_more_progressBar);
 

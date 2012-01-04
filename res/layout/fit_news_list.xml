@@ -2,9 +2,9 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="@color/gray"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    android:background="@color/gray"
     android:orientation="vertical" >
 
     <RelativeLayout
@@ -42,12 +42,15 @@
         android:layout_below="@+id/search_bar"
         android:clickable="true"
         android:divider="@color/slate_blue"
-        android:dividerHeight="1dp">
+        android:dividerHeight="1dp" >
     </com.kogi.fitnews.PullToRefreshListView>
 
-    <TextView android:id="@android:id/empty"
+    <TextView
+        android:id="@android:id/empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text=""/>
+        android:gravity="center"
+        android:padding="5dp" />
+
 </RelativeLayout>
