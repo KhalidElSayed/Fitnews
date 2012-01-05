@@ -1,7 +1,10 @@
 package com.kogi.fitnews;
 
+import java.io.File;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import com.kogi.model.FitItem;
 import com.kogi.util.AppStatus;
@@ -15,8 +18,10 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.text.Html;
 import android.view.Gravity;
@@ -25,6 +30,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
@@ -52,6 +58,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 	private ImageView mNextAction;
 
 	private FitItem mFItItem;
+	private DecoderImages mDecoderImages;
 	private int mIndex;
 	// synchronize the actions on the background
 	private boolean mFinishedAction;
@@ -78,21 +85,33 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			setContentView(back);
 
 			showToastMessage(ItemDetailActivity.this,
-					R.string.message_to_network_problem, Toast.LENGTH_LONG);
+					getString(R.string.message_to_network_problem),
+					Toast.LENGTH_LONG);
 			return;
 		}
 
 		setContentView(R.layout.detail_item_fit);
 
+		mDecoderImages = new DecoderImages(this);
+
 		mLabTitle = (TextView) findViewById(R.id.lab_title_item_detail);
 		mLabDate = (TextView) findViewById(R.id.lab_date);
-		
+
 		mImageView = (ImageView) findViewById(R.id.img_item_detail);
 		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.8);
 		int height = (int) (getWindowManager().getDefaultDisplay().getHeight() * 0.4);
-		mImageView.setLayoutParams(new RelativeLayout.LayoutParams(width, height));
+		RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+				width, height);
+		layoutParams.addRule(RelativeLayout.BELOW, R.id.lab_date);
+		layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+		mImageView.setLayoutParams(layoutParams);
+		TypedArray attr = getApplicationContext().obtainStyledAttributes(
+				R.styleable.HelloGallery);
+		int galleryItemBackground = attr.getResourceId(
+				R.styleable.HelloGallery_android_galleryItemBackground, 0);
+		mImageView.setBackgroundResource(galleryItemBackground);
 		mImageView.setOnClickListener(this);
-		
+
 		mLabContent = (TextView) findViewById(R.id.lab_content);
 
 		mPrevAction = (ImageView) findViewById(R.id.prev_action);
@@ -126,6 +145,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 					} else {
 						setFitItemBaseData();
 						mImageView.setImageBitmap(mFItItem.getImages().get(0));
+						mImageView.setTag(0);
 					}
 				} else {
 					setFitItemBaseData();
@@ -154,9 +174,9 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 				int intentos = 1;
 
 				while (!finished && intentos <= 2) {
-					Bitmap bmp = DecoderImages.getBitmapFromURL(urlImage);
+					Bitmap bmp = mDecoderImages.getBitmapFromURL(urlImage);
 					if (bmp != null) {
-						Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
+						Bitmap bmpResized = mDecoderImages.getBitmapReSize(bmp,
 								width);
 						fitItem.getImages().add(index, bmpResized);
 						finished = true;
@@ -215,6 +235,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		protected void onPostExecute(Void result) {
 			// set the first image
 			mImageView.setImageBitmap(mFItItem.getImages().get(0));
+			mImageView.setTag(0);
 			mProgressDialog.hide();
 			// mHideProgressDialogHandler.sendEmptyMessage(0);
 
@@ -241,8 +262,9 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.8);
 		Bitmap bmp = BitmapFactory.decodeResource(getResources(),
 				R.drawable.no_images);
-		Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp, width);
+		Bitmap bmpResized = mDecoderImages.getBitmapReSize(bmp, width);
 		mImageView.setImageBitmap(bmpResized);
+		mImageView.setTag(-1);// -1 indicate it has not image
 	}
 
 	private void doPreviousAction() {
@@ -305,9 +327,45 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		}
 	}
 
+	public void doSavePic() {
+		Bitmap bmp = null;
+		String bmpName = "";
+		boolean isDoneJob = false;
+		if ((Integer) mImageView.getTag() == -1) {
+			bmp = BitmapFactory.decodeResource(getResources(),
+					R.drawable.no_images_small);
+			SimpleDateFormat format = new SimpleDateFormat("d-MM-yyyy_hh-mm");
+			bmpName = format.format(new Date()).trim() + ".png";
+		} else {
+			bmp = mFItItem.getImages().get((Integer) mImageView.getTag());
+			String urlImage = mFItItem.getUrlsImages().get(
+					(Integer) mImageView.getTag());
+			String delims = "[/]+";
+			String[] tokens = urlImage.split(delims);
+			bmpName = tokens[tokens.length - 1].trim();
+		}
+
+		if (bmp != null && !bmpName.equals("")) {
+			String dir = Environment.getExternalStorageDirectory().toString()
+					+ "/DCIM/";
+			isDoneJob = mDecoderImages.saveImageToExternalStorage(dir, bmpName,
+					bmp);
+		}
+
+		if (isDoneJob) {
+			showToastMessage(ItemDetailActivity.this, bmpName
+					+ " Saved successfully!", Toast.LENGTH_SHORT);
+		} else {
+			showToastMessage(ItemDetailActivity.this,
+					"The image can't be saved, try again!", Toast.LENGTH_SHORT);
+		}
+	}
+
 	private void showGalleryImagesPopUp() {
-		if (mFItItem.getUrlsImages().size() > 1) {
+		if (mFItItem.getImages().size() > 1) {
 			mGalleryImagesDialog = buildPopUpGalleryImages();
+			mGalleryImagesDialog.getWindow().setGravity(Gravity.TOP);
+
 			mGalleryImagesDialog.show();
 		}
 	}
@@ -328,8 +386,8 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		return true;
 	}
 
-	private void showToastMessage(Context ctx, int idMsg, int duration) {
-		Toast.makeText(ctx, idMsg, duration).show();
+	private void showToastMessage(Context ctx, String msg, int duration) {
+		Toast.makeText(ctx, msg, duration).show();
 	}
 
 	private Dialog buildPopUpGalleryImages() {
@@ -347,7 +405,8 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			public void onItemClick(AdapterView parent, View v, int position,
 					long id) {
 				mImageView.setImageBitmap(mFItItem.getImages().get(position));
-
+				mImageView.setTag(position);// save the position to know which
+											// image is
 				if (mGalleryImagesDialog != null)
 					mGalleryImagesDialog.dismiss();
 			}
@@ -367,6 +426,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			doPreviousAction();
 			break;
 		case R.id.save_pic_action:
+			doSavePic();
 			break;
 
 		case R.id.share_facebook_action:
@@ -421,7 +481,11 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			ImageView imageView = new ImageView(mContext);
 
 			imageView.setImageBitmap(mImages[position]);
-			imageView.setLayoutParams(new Gallery.LayoutParams(150, 100));
+			int width = (int) (getWindowManager().getDefaultDisplay()
+					.getWidth() * 0.8);
+			int height = (int) (getWindowManager().getDefaultDisplay()
+					.getHeight() * 0.4);
+			imageView.setLayoutParams(new Gallery.LayoutParams(width, height));
 			imageView.setScaleType(ImageView.ScaleType.FIT_XY);
 			imageView.setBackgroundResource(mGalleryItemBackground);
 

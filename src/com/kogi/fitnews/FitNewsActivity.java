@@ -279,6 +279,8 @@ public class FitNewsActivity extends ListActivity {
 			return;
 		}
 
+		mDecoderImages = new DecoderImages(this);
+		
 		mTextSearch = (TextView) findViewById(R.id.txt_search);
 		mImgSearchAction = (ImageView) findViewById(R.id.img_search_action);
 		mImgSearchAction.setOnClickListener(new OnClickListener() {
@@ -422,10 +424,10 @@ public class FitNewsActivity extends ListActivity {
 				boolean finished = false;
 				int intentos = 1;
 				while (!finished && intentos <= 2) {
-					Bitmap bmp = DecoderImages.getBitmapFromURL(fitItem
+					Bitmap bmp = mDecoderImages.getBitmapFromURL(fitItem
 							.getUrlInitImage());
 					if (bmp != null) {
-						Bitmap bmpResized = DecoderImages.getBitmapReSize(bmp,
+						Bitmap bmpResized = mDecoderImages.getBitmapReSize(bmp,
 								width);
 						fitItem.setInitImage(bmpResized);
 						finished = true;
@@ -642,6 +644,7 @@ public class FitNewsActivity extends ListActivity {
 	private TextView mTextSearch;
 	private ImageView mImgSearchAction;
 	private ArrayList<FitItem> mFitItems;
-
+	private DecoderImages mDecoderImages;
+	
 	public static String ITEM_SELECTED = "item_selected";
 }
