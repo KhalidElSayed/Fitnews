@@ -1,12 +1,13 @@
 package com.kogi.fitnews;
 
-import java.io.File;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.facebook.android.Facebook;
+import com.facebook.android.FacebookError;
 import com.kogi.model.FitItem;
+import com.kogi.social.facebook.BaseDialogListener;
 import com.kogi.util.AppStatus;
 import com.kogi.util.DecoderImages;
 
@@ -18,19 +19,19 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.text.Html;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.view.Window;
-import android.view.WindowManager;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
@@ -49,6 +50,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 	private TextView mLabContent;
 	private ProgressDialog mProgressDialog;
 	private Dialog mGalleryImagesDialog;
+	private Dialog mTwitterDialog;
 
 	// action bar
 	private ImageView mPrevAction;
@@ -62,6 +64,8 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 	private int mIndex;
 	// synchronize the actions on the background
 	private boolean mFinishedAction;
+
+	private String permissions[] = { "publish_stream" };
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -105,11 +109,6 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		layoutParams.addRule(RelativeLayout.BELOW, R.id.lab_date);
 		layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
 		mImageView.setLayoutParams(layoutParams);
-		TypedArray attr = getApplicationContext().obtainStyledAttributes(
-				R.styleable.HelloGallery);
-		int galleryItemBackground = attr.getResourceId(
-				R.styleable.HelloGallery_android_galleryItemBackground, 0);
-		mImageView.setBackgroundResource(galleryItemBackground);
 		mImageView.setOnClickListener(this);
 
 		mLabContent = (TextView) findViewById(R.id.lab_content);
@@ -272,8 +271,12 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		if (!mFinishedAction)
 			return;
 
-		if (!decrementIndex())
+		if (!decrementIndex()) {
+			showToastMessage(ItemDetailActivity.this,
+					getString(R.string.message_to_previous_action),
+					Toast.LENGTH_SHORT);
 			return;
+		}
 
 		FitItem item = MyApplication.getInstance().getFitItemsList()
 				.get(mIndex);
@@ -302,8 +305,12 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		if (!mFinishedAction)
 			return;
 
-		if (!incrementIndex())
+		if (!incrementIndex()) {
+			showToastMessage(ItemDetailActivity.this,
+					getString(R.string.message_to_next_action),
+					Toast.LENGTH_SHORT);
 			return;
+		}
 
 		FitItem item = MyApplication.getInstance().getFitItemsList()
 				.get(mIndex);
@@ -337,6 +344,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			SimpleDateFormat format = new SimpleDateFormat("d-MM-yyyy_hh-mm");
 			bmpName = format.format(new Date()).trim() + ".png";
 		} else {
+			//TODO cambiar la dependencia al obtener la imagen con la posicion para save pic action
 			bmp = mFItItem.getImages().get((Integer) mImageView.getTag());
 			String urlImage = mFItItem.getUrlsImages().get(
 					(Integer) mImageView.getTag());
@@ -361,12 +369,30 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		}
 	}
 
+	public void doShareFacebook() {
+		Facebook facebook = MyApplication.getInstance().getFacebook();
+		if (facebook.isSessionValid()) {
+			buildPostDialogFacebook();
+		} else {
+			facebook.authorize(ItemDetailActivity.this, permissions,
+					new AuthDialog());
+		}
+	}
+
+	public void doShareTwitter() {
+		String content = "http://twitter.com/?status= ";
+		String data = "FitNews: " + mFItItem.getTitlePlain() + " "
+				+ mFItItem.getUrlContent();
+		showTwitterDialog(content + data);
+
+	}
+
 	private void showGalleryImagesPopUp() {
 		if (mFItItem.getImages().size() > 1) {
 			mGalleryImagesDialog = buildPopUpGalleryImages();
 			mGalleryImagesDialog.getWindow().setGravity(Gravity.TOP);
-
-			mGalleryImagesDialog.show();
+			if (mGalleryImagesDialog != null)
+				mGalleryImagesDialog.show();
 		}
 	}
 
@@ -419,34 +445,110 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		return alertDialog;
 	}
 
+	public void showTwitterDialog(String url) {
+		mTwitterDialog = new Dialog(ItemDetailActivity.this);
+		mTwitterDialog.setContentView(R.layout.twitter_dialog);
+		mTwitterDialog.setTitle("Share by twitter");
+		WebView webView = (WebView) mTwitterDialog.findViewById(R.id.webview);
+		webView.setWebViewClient(new HelloWebViewClient());
+		webView.loadUrl(url);
+		webView.getSettings().setJavaScriptEnabled(true);
+		mTwitterDialog.show();
+	}
+
 	@Override
 	public void onClick(View v) {
-		switch (v.getId()) {
-		case R.id.prev_action:
+
+		final int id = v.getId();
+		if (id == R.id.prev_action)
 			doPreviousAction();
-			break;
-		case R.id.save_pic_action:
+		else if (id == R.id.save_pic_action)
 			doSavePic();
-			break;
-
-		case R.id.share_facebook_action:
-			break;
-
-		case R.id.share_twetter_action:
-			break;
-
-		case R.id.next_action:
+		else if (id == R.id.share_facebook_action)
+			doShareFacebook();
+		else if (id == R.id.share_twetter_action)
+			doShareTwitter();
+		else if (id == R.id.next_action)
 			doNextAction();
-			break;
-
-		case R.id.img_item_detail:
+		else if (id == R.id.img_item_detail)
 			showGalleryImagesPopUp();
-			break;
 
-		default:
-			break;
+	}
+
+	private void buildPostDialogFacebook() {
+		Bundle params = new Bundle();
+		params.putString("caption", getString(R.string.app_name));
+		params.putString("description", mFItItem.getUrlContent());
+		int index = (Integer) mImageView.getTag();
+		if (index == -1) {
+			params.putString("picture",
+					"http://www.clker.com/embed-24011-1024011-small.html");
+		} else {
+			params.putString("picture",
+					mFItItem.getUrlsImages().get((Integer) mImageView.getTag()));
 		}
 
+		params.putString("name", "Via FitNews by android");
+
+		MyApplication
+				.getInstance()
+				.getFacebook()
+				.dialog(ItemDetailActivity.this, "feed", params,
+						new PostDialog());
+	}
+
+	// callback for the login dialog
+	private class AuthDialog extends BaseDialogListener {
+
+		@Override
+		public void onComplete(Bundle values) {
+			buildPostDialogFacebook();
+		}
+
+		@Override
+		public void onFacebookError(FacebookError e) {
+			showToastMessage(ItemDetailActivity.this, "Error: Try login again",
+					Toast.LENGTH_SHORT);
+			super.onFacebookError(e);
+		}
+
+	}
+
+	/*
+	 * callback for the feed dialog which updates the profile status
+	 */
+	public class PostDialog extends BaseDialogListener {
+		@Override
+		public void onComplete(Bundle values) {
+			final String postId = values.getString("post_id");
+			if (postId != null) {
+				showToastMessage(ItemDetailActivity.this,
+						"The post was made successfully", Toast.LENGTH_SHORT);
+			} else {
+				showToastMessage(ItemDetailActivity.this, "No wall post made",
+						Toast.LENGTH_SHORT);
+			}
+		}
+
+		@Override
+		public void onFacebookError(FacebookError error) {
+			showToastMessage(ItemDetailActivity.this, "Facebook Error: "
+					+ error.getMessage(), Toast.LENGTH_SHORT);
+		}
+
+		@Override
+		public void onCancel() {
+			Toast toast = Toast.makeText(getApplicationContext(),
+					"Update status cancelled", Toast.LENGTH_SHORT);
+			toast.show();
+		}
+	}
+
+	private class HelloWebViewClient extends WebViewClient {
+		public boolean shouldOverrideUrlLoading(WebView view, String url) {
+			view.loadUrl(url);
+			return true;
+		}
 	}
 
 	public class ImageGalleryAdapter extends BaseAdapter {
