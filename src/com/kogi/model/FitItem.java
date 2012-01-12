@@ -23,8 +23,8 @@ public class FitItem {
 
 	public FitItem() {
 		tags = new ArrayList<String>();
-		urlsImages = new ArrayList<String>();
-		images = new ArrayList<Bitmap>();
+		urlsImages = new ArrayList<String>(0);
+		images = new ArrayList<Bitmap>(0);
 	}
 
 	public int getId() {

@@ -128,7 +128,6 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 
 		addHeaderView(mRefreshView);
 
-		setFooterDividersEnabled(false);
 		addFooterView(mFooterView);
 
 		super.setOnScrollListener(this);

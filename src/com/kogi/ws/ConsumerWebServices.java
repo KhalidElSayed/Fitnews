@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -203,7 +202,7 @@ public class ConsumerWebServices {
 
 					fitItem.getUrlsImages().add(j, urlImageFull);
 				}
-
+				
 				// add fitItem to the list of fitItems
 				fitItems.add(fitItem);
 

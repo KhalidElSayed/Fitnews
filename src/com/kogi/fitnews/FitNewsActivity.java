@@ -117,7 +117,6 @@ public class FitNewsActivity extends ListActivity {
 			}
 
 			// set the list fit item data
-			// TODO manage the images in cache
 			FitItem fitItem = mFitItems.get(position);
 			// update the position on the tag
 			holder.imgNews.setTag(position);
@@ -273,14 +272,15 @@ public class FitNewsActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.fit_news_list);
 
-		if (!AppStatus.isOnline(FitNewsActivity.this)) {
+		if (!AppStatus.isOnline(FitNewsActivity.this)
+				&& MyApplication.getInstance().getFitItemsList() == null) {
 			TextView txt = (TextView) findViewById(android.R.id.empty);
 			txt.setText(R.string.message_to_network_problem);
 			return;
 		}
 
 		mDecoderImages = new DecoderImages(this);
-		
+
 		mTextSearch = (TextView) findViewById(R.id.txt_search);
 		mImgSearchAction = (ImageView) findViewById(R.id.img_search_action);
 		mImgSearchAction.setOnClickListener(new OnClickListener() {
@@ -343,7 +343,7 @@ public class FitNewsActivity extends ListActivity {
 							// Notify the loading more operation has finished
 							((PullToRefreshListView) getListView())
 									.onLoadingMoreComplete();
-							
+
 							showToastMessage(FitNewsActivity.this,
 									R.string.message_to_network_problem,
 									Toast.LENGTH_LONG);
@@ -354,7 +354,7 @@ public class FitNewsActivity extends ListActivity {
 					}
 				});
 
-		// check if the fit items list is not null before to launch the
+		// check if the fit items list is null before to launch the
 		// thread
 		if (MyApplication.getInstance().getFitItemsList() == null) {
 			mFitItems = new ArrayList<FitItem>();
@@ -402,7 +402,8 @@ public class FitNewsActivity extends ListActivity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		MyApplication.getInstance().setFitItemsList(mFitItems);
+		if (mFitItems != null)
+			MyApplication.getInstance().setFitItemsList(mFitItems);
 	}
 
 	final private Handler mHideProgressDialogHandler = new Handler() {
@@ -584,7 +585,9 @@ public class FitNewsActivity extends ListActivity {
 
 			try {
 				final ArrayList<FitItem> newFits = ConsumerWebServices
-						.getInstance().getFitNewsData("20", "1");
+						.getInstance().getFitNewsData("5", "1");// TODO apply
+																// pagination in
+																// load more
 				if (!newFits.isEmpty()) {
 					downloadInitImagesFitItems(newFits);
 					mFitItems.addAll(newFits);
@@ -636,7 +639,6 @@ public class FitNewsActivity extends ListActivity {
 		@Override
 		public void run() {
 			((BaseAdapter) getListAdapter()).notifyDataSetChanged();
-			getListView().setSelection(1);
 		}
 	};
 
@@ -645,6 +647,6 @@ public class FitNewsActivity extends ListActivity {
 	private ImageView mImgSearchAction;
 	private ArrayList<FitItem> mFitItems;
 	private DecoderImages mDecoderImages;
-	
+
 	public static String ITEM_SELECTED = "item_selected";
 }

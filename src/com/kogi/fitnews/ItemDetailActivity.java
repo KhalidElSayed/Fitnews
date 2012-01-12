@@ -14,18 +14,18 @@ import com.kogi.util.DecoderImages;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.text.Html;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -48,7 +48,6 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 	private TextView mLabDate;
 	private ImageView mImageView;
 	private TextView mLabContent;
-	private ProgressDialog mProgressDialog;
 	private Dialog mGalleryImagesDialog;
 	private Dialog mTwitterDialog;
 
@@ -66,6 +65,11 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 	private boolean mFinishedAction;
 
 	private String permissions[] = { "publish_stream" };
+
+	// tags images
+	final int ID_NOT_IMAGES = -1;// indicate it has not image
+	final int ID_IMAGE_NOT_DOWNLOADED = -2;// indicate the image can´t be
+											// downloaded
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -86,11 +90,11 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 				}
 			});
 
-			setContentView(back);
-
 			showToastMessage(ItemDetailActivity.this,
 					getString(R.string.message_to_network_problem),
 					Toast.LENGTH_LONG);
+
+			setContentView(back);
 			return;
 		}
 
@@ -131,21 +135,16 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 				.getInt(FitNewsActivity.ITEM_SELECTED) : -1;
 
 		if (mIndex != -1) {
-			mFItItem = MyApplication.getInstance().getFitItemsList()
-					.get(mIndex);
+			// TODO checkout if MyApplication.getInstance().getFitItemsList() is
+			// not null
+			ArrayList<FitItem> fitItems = MyApplication.getInstance()
+					.getFitItemsList();
+			mFItItem = fitItems.get(mIndex);
 
 			if (mFItItem != null) {
 				if (mFItItem.getUrlsImages().size() >= 1) {
-					if (mFItItem.getImages().isEmpty()) {
-
-						new DownloadImagesToFitItemTask().execute(mFItItem);
-						setFitItemBaseData();
-
-					} else {
-						setFitItemBaseData();
-						mImageView.setImageBitmap(mFItItem.getImages().get(0));
-						mImageView.setTag(0);
-					}
+					setFitItemBaseData();
+					new DownloadImagesToFitItemTask().execute(mFItItem);
 				} else {
 					setFitItemBaseData();
 					setFitItemImageWhenItNoHasImages();
@@ -157,13 +156,34 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		}
 	}
 
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		MyApplication.getInstance().getFacebook()
+				.authorizeCallback(requestCode, resultCode, data);
+	}
+
+	@Override
+	protected void onDestroy() {
+		// clean the images load in the memory
+		ArrayList<FitItem> fitItems = MyApplication.getInstance()
+				.getFitItemsList();
+		for (FitItem item : fitItems) {
+			if (!item.getImages().isEmpty())
+				item.getImages().clear();
+		}
+		super.onDestroy();
+	}
+
 	/**
 	 * Download the carousel images from chosen Fit item from its images urls
 	 * list
 	 */
 	protected void downloadImagesFitItem(FitItem fitItem) {
+		final FitItem item = fitItem;
 		int width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.8);
-		ArrayList<String> urls = fitItem.getUrlsImages();
+		final ArrayList<String> urls = item.getUrlsImages();
 
 		for (int i = 0; i < urls.size(); i++) {
 			final int index = i;
@@ -177,10 +197,12 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 					if (bmp != null) {
 						Bitmap bmpResized = mDecoderImages.getBitmapReSize(bmp,
 								width);
-						fitItem.getImages().add(index, bmpResized);
+						item.getImages().add(index, bmpResized);
 						finished = true;
 					} else {
 						intentos++;
+						if (intentos > 2)
+							item.getImages().add(index, null);
 					}
 
 				}
@@ -188,35 +210,13 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		}
 	}
 
-	private ProgressDialog buildProgressDialog(String msg,
-			boolean isCancelable, boolean isIndeterminate) {
-		ProgressDialog progressDialog = new ProgressDialog(
-				ItemDetailActivity.this);
-		progressDialog.setIndeterminate(true);
-		progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		progressDialog.setCancelable(false);
-		progressDialog.setMessage(msg);
-
-		return progressDialog;
-	}
-
-	final private Handler mHideProgressDialogHandler = new Handler() {
-		public void handleMessage(android.os.Message msg) {
-			if (mProgressDialog.isShowing())
-				mProgressDialog.dismiss();
-		};
-
-	};
-
 	private class DownloadImagesToFitItemTask extends
 			AsyncTask<FitItem, Void, Void> {
 
 		@Override
 		protected void onPreExecute() {
 			mFinishedAction = false;
-			mProgressDialog = buildProgressDialog("Loading data...", false,
-					true);
-			mProgressDialog.show();
+			mImageView.setImageResource(R.drawable.hourglass_a);
 		}
 
 		@Override
@@ -233,18 +233,25 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		@Override
 		protected void onPostExecute(Void result) {
 			// set the first image
-			mImageView.setImageBitmap(mFItItem.getImages().get(0));
-			mImageView.setTag(0);
-			mProgressDialog.hide();
-			// mHideProgressDialogHandler.sendEmptyMessage(0);
-
+			Bitmap bmp = mFItItem.getImages().get(0);
+			setFirstImage(bmp);
 			mFinishedAction = true;
 			super.onPostExecute(result);
 		}
+	}
 
-		@Override
-		protected void onCancelled() {
-			mHideProgressDialogHandler.sendEmptyMessage(0);
+	private void setFirstImage(Bitmap bmp) {
+		if (bmp == null) {
+			int width = (int) (getWindowManager().getDefaultDisplay()
+					.getWidth() * 0.8);
+			Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
+					R.drawable.who_hi);
+			Bitmap bmpResized = mDecoderImages.getBitmapReSize(bitmap, width);
+			mImageView.setImageBitmap(bmpResized);
+			mImageView.setTag(ID_IMAGE_NOT_DOWNLOADED);
+		} else {
+			mImageView.setImageBitmap(bmp);
+			mImageView.setTag(0);
 		}
 	}
 
@@ -263,7 +270,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 				R.drawable.no_images);
 		Bitmap bmpResized = mDecoderImages.getBitmapReSize(bmp, width);
 		mImageView.setImageBitmap(bmpResized);
-		mImageView.setTag(-1);// -1 indicate it has not image
+		mImageView.setTag(ID_NOT_IMAGES);
 	}
 
 	private void doPreviousAction() {
@@ -287,18 +294,19 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		if (mFItItem.getUrlsImages().size() >= 1) {
 			if (mFItItem.getImages().isEmpty()) {
 
-				new DownloadImagesToFitItemTask().execute(mFItItem);
 				setFitItemBaseData();
+				new DownloadImagesToFitItemTask().execute(mFItItem);
 
 			} else {
 				setFitItemBaseData();
-				mImageView.setImageBitmap(mFItItem.getImages().get(0));
+				setFirstImage(mFItItem.getImages().get(0));
 			}
 		} else {
 			setFitItemBaseData();
 			setFitItemImageWhenItNoHasImages();
 		}
-
+		// to know if the gallery was created for the current item
+		mGalleryImagesDialog = null;
 	}
 
 	private void doNextAction() {
@@ -321,41 +329,50 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		if (mFItItem.getUrlsImages().size() >= 1) {
 			if (mFItItem.getImages().isEmpty()) {
 
-				new DownloadImagesToFitItemTask().execute(mFItItem);
 				setFitItemBaseData();
+				new DownloadImagesToFitItemTask().execute(mFItItem);
 
 			} else {
 				setFitItemBaseData();
-				mImageView.setImageBitmap(mFItItem.getImages().get(0));
+				setFirstImage(mFItItem.getImages().get(0));
 			}
 		} else {
 			setFitItemBaseData();
 			setFitItemImageWhenItNoHasImages();
 		}
+
+		// to know if the gallery was created for the current item
+		mGalleryImagesDialog = null;
 	}
 
 	public void doSavePic() {
 		Bitmap bmp = null;
 		String bmpName = "";
 		boolean isDoneJob = false;
-		if ((Integer) mImageView.getTag() == -1) {
-			bmp = BitmapFactory.decodeResource(getResources(),
-					R.drawable.no_images_small);
-			SimpleDateFormat format = new SimpleDateFormat("d-MM-yyyy_hh-mm");
-			bmpName = format.format(new Date()).trim() + ".png";
-		} else {
-			//TODO cambiar la dependencia al obtener la imagen con la posicion para save pic action
-			bmp = mFItItem.getImages().get((Integer) mImageView.getTag());
-			String urlImage = mFItItem.getUrlsImages().get(
-					(Integer) mImageView.getTag());
-			String delims = "[/]+";
-			String[] tokens = urlImage.split(delims);
-			bmpName = tokens[tokens.length - 1].trim();
+		if ((Integer) mImageView.getTag() == ID_NOT_IMAGES) {
+			showToastMessage(ItemDetailActivity.this,
+					"This article hasn't pictures", Toast.LENGTH_SHORT);
+			return;
+		} else if ((Integer) mImageView.getTag() == ID_IMAGE_NOT_DOWNLOADED) {
+			showToastMessage(ItemDetailActivity.this,
+					"This image can´t be downloaded", Toast.LENGTH_SHORT);
+			return;
 		}
+
+		// TODO cambiar la dependencia al obtener la imagen con la posicion
+		// para save pic action
+		bmp = mFItItem.getImages().get((Integer) mImageView.getTag());
+		String urlImage = mFItItem.getUrlsImages().get(
+				(Integer) mImageView.getTag());
+		String delims = "[/]+";
+		String[] tokens = urlImage.split(delims);
+		SimpleDateFormat format = new SimpleDateFormat("yyyy_hh_mm_ss");
+		String stringDate = format.format(new Date());
+		bmpName = stringDate + "_" + tokens[tokens.length - 1].trim();
 
 		if (bmp != null && !bmpName.equals("")) {
 			String dir = Environment.getExternalStorageDirectory().toString()
-					+ "/DCIM/";
+					+ "/DCIM/camera/";
 			isDoneJob = mDecoderImages.saveImageToExternalStorage(dir, bmpName,
 					bmp);
 		}
@@ -365,7 +382,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 					+ " Saved successfully!", Toast.LENGTH_SHORT);
 		} else {
 			showToastMessage(ItemDetailActivity.this,
-					"The image can't be saved, try again!", Toast.LENGTH_SHORT);
+					" The image can't be saved, try again!", Toast.LENGTH_SHORT);
 		}
 	}
 
@@ -389,10 +406,13 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 
 	private void showGalleryImagesPopUp() {
 		if (mFItItem.getImages().size() > 1) {
-			mGalleryImagesDialog = buildPopUpGalleryImages();
-			mGalleryImagesDialog.getWindow().setGravity(Gravity.TOP);
-			if (mGalleryImagesDialog != null)
-				mGalleryImagesDialog.show();
+			if (mGalleryImagesDialog == null) {
+				mGalleryImagesDialog = buildPopUpGalleryImages();
+				mGalleryImagesDialog.getWindow().setGravity(Gravity.TOP);
+			}
+
+			mGalleryImagesDialog.show();
+
 		}
 	}
 
@@ -424,17 +444,33 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		gallery.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT,
 				LayoutParams.WRAP_CONTENT));
 		gallery.setPadding(3, 3, 3, 3);
+
 		gallery.setAdapter(new ImageGalleryAdapter(ItemDetailActivity.this,
 				mFItItem.getImages().toArray(new Bitmap[0])));
 
 		gallery.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView parent, View v, int position,
 					long id) {
-				mImageView.setImageBitmap(mFItItem.getImages().get(position));
-				mImageView.setTag(position);// save the position to know which
-											// image is
+
+				if (mFItItem.getImages().get(position) == null) {
+					int width = (int) (getWindowManager().getDefaultDisplay()
+							.getWidth() * 0.8);
+					Bitmap bmp = BitmapFactory.decodeResource(getResources(),
+							R.drawable.who_hi);
+					Bitmap bmpResized = mDecoderImages.getBitmapReSize(bmp,
+							width);
+					mImageView.setImageBitmap(bmpResized);
+					mImageView.setTag(ID_IMAGE_NOT_DOWNLOADED);
+				} else {
+					mImageView.setImageBitmap(mFItItem.getImages()
+							.get(position));
+					mImageView.setTag(position);// save the position to know
+												// which
+												// image is
+				}
+
 				if (mGalleryImagesDialog != null)
-					mGalleryImagesDialog.dismiss();
+					mGalleryImagesDialog.hide();
 			}
 		});
 
@@ -554,9 +590,11 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 	public class ImageGalleryAdapter extends BaseAdapter {
 		int mGalleryItemBackground;
 		private Context mContext;
-		private Bitmap[] mImages;
+		private Bitmap mImages[];
+		private int width;
+		private int height;
 
-		public ImageGalleryAdapter(Context c, Bitmap[] images) {
+		public ImageGalleryAdapter(Context c, Bitmap images[]) {
 			mContext = c;
 			mImages = images;
 			TypedArray attr = mContext
@@ -564,6 +602,9 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			mGalleryItemBackground = attr.getResourceId(
 					R.styleable.HelloGallery_android_galleryItemBackground, 0);
 			attr.recycle();
+			width = (int) (getWindowManager().getDefaultDisplay().getWidth() * 0.8);
+			height = (int) (getWindowManager().getDefaultDisplay().getHeight() * 0.4);
+
 		}
 
 		public int getCount() {
@@ -571,7 +612,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		}
 
 		public Object getItem(int position) {
-			return position;
+			return mImages[position];
 		}
 
 		public long getItemId(int position) {
@@ -580,19 +621,28 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-			ImageView imageView = new ImageView(mContext);
 
-			imageView.setImageBitmap(mImages[position]);
-			int width = (int) (getWindowManager().getDefaultDisplay()
-					.getWidth() * 0.8);
-			int height = (int) (getWindowManager().getDefaultDisplay()
-					.getHeight() * 0.4);
-			imageView.setLayoutParams(new Gallery.LayoutParams(width, height));
-			imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-			imageView.setBackgroundResource(mGalleryItemBackground);
+			if (convertView == null) {
+				convertView = new ImageView(mContext);
+				convertView.setLayoutParams(new Gallery.LayoutParams(width,
+						height));
+				((ImageView) convertView)
+						.setScaleType(ImageView.ScaleType.FIT_XY);
+				convertView.setBackgroundResource(mGalleryItemBackground);
+			}
 
-			return imageView;
+			Bitmap bmp = mImages[position];
+			if (bmp == null) {
+				Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
+						R.drawable.who_hi);
+				Bitmap bmpResized = mDecoderImages.getBitmapReSize(bitmap,
+						width);
+				((ImageView) convertView).setImageBitmap(bmpResized);
+			} else {
+				((ImageView) convertView).setImageBitmap(mImages[position]);
+			}
+
+			return convertView;
 		}
-
 	}
 }

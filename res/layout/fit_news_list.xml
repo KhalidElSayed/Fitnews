@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@color/gray"
+    android:background="@color/white"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:orientation="vertical" >
@@ -42,7 +42,8 @@
         android:layout_below="@+id/search_bar"
         android:clickable="true"
         android:divider="@color/slate_blue"
-        android:dividerHeight="1dp" >
+        android:dividerHeight="1dp" 
+        android:footerDividersEnabled="true">
     </com.kogi.fitnews.PullToRefreshListView>
 
     <TextView
