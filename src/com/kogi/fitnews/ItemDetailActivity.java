@@ -520,6 +520,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			params.putString("picture",
 					"http://www.clker.com/embed-24011-1024011-small.html");
 		} else {
+			//TODO validar el indice para evitar exception
 			params.putString("picture",
 					mFItItem.getUrlsImages().get((Integer) mImageView.getTag()));
 		}

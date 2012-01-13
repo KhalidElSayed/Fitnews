@@ -3,9 +3,16 @@
     android:id="@+id/root_fit_news_item_list"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:clickable="true"
     android:background="@drawable/fits_list_selector"
-    >
+    android:clickable="true" >
+
+    <View
+        android:id="@+id/top_line"
+        android:layout_width="fill_parent"
+        android:layout_height="0.5dp"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/lab_title_item_list_fit"
+        android:background="@color/dark_slate_gray" />
 
     <ImageView
         android:id="@+id/img_new_item_list_fit"
@@ -13,11 +20,11 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignTop="@+id/lab_detail_item_list_fit"
-        android:padding="3dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:scaleType="fitXY"
         android:adjustViewBounds="true"
+        android:padding="3dp"
+        android:scaleType="fitXY"
         android:src="@drawable/no_images_small" />
 
     <TextView

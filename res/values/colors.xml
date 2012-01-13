@@ -11,4 +11,6 @@
 	<color name="light_sky">#87AFC7</color>
 	<color name="slate_blue">#357EC7</color>
 	<color name="dark_slate_gray">#2F4F4F</color>
+	<color name="gray_2">#AFAFAF</color>
+	<color name="gray_1">#C0C0C0</color>
 </resources>

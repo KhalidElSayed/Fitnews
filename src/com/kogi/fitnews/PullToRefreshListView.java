@@ -52,7 +52,7 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 
 	// footer
 	private RelativeLayout mFooterView;
-	private TextView mLabLoadMore;
+	//private TextView mLabLoadMore;
 	private ProgressBar mProgressBarLoadMore;
 
 	private int mCurrentScrollState;
@@ -116,7 +116,8 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		// footer
 		mFooterView = (RelativeLayout) mInflater.inflate(
 				R.layout.load_more_footer, this, false);
-		mLabLoadMore = (TextView) mFooterView.findViewById(R.id.load_more_lab_view);
+		/*mLabLoadMore = (TextView) mFooterView
+				.findViewById(R.id.load_more_lab_view);*/
 		mProgressBarLoadMore = (ProgressBar) mFooterView
 				.findViewById(R.id.load_more_progressBar);
 
@@ -352,16 +353,22 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 		// no need a list to load more items
 		if (mOnLoadMoreListener != null) {
 
-			if (visibleItemCount == totalItemCount)
-				Toast.makeText(getContext(), "Tap to load more",
-						Toast.LENGTH_SHORT).show();
+			if (visibleItemCount == totalItemCount) {
+				mProgressBarLoadMore.setVisibility(View.GONE);
+				//mLabLoadMore.setVisibility(View.GONE);
+				return;
+			}
 
 			boolean loadMore = firstVisibleItem + visibleItemCount >= totalItemCount;
+
 			if (!mIsLoadingMore && loadMore && mRefreshState != REFRESHING
 					&& mCurrentScrollState != SCROLL_STATE_IDLE) {
+				mProgressBarLoadMore.setVisibility(View.VISIBLE);
+				//mLabLoadMore.setVisibility(View.VISIBLE);
 				mIsLoadingMore = true;
 				onLoadMore();
 			}
+
 		}
 	}
 
