@@ -85,9 +85,12 @@ public class FitNewsActivity extends ListActivity {
 			if (convertView == null) {
 
 				convertView = mInflater.inflate(R.layout.fit_news_item_list,
-						null);
+						null);			
 				holder = new ViewHolder();
 
+				//register a callback when the user push a row of the list
+				convertView.setOnClickListener(new OnItemClickAction(holder));
+				
 				holder.imgNews = (ImageView) convertView
 						.findViewById(R.id.img_new_item_list_fit);
 				holder.imgNews.setMinimumWidth(screenWidth);
@@ -98,10 +101,7 @@ public class FitNewsActivity extends ListActivity {
 				layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
 				layoutParams.addRule(RelativeLayout.ALIGN_TOP,
 						R.id.lab_detail_item_list_fit);
-				holder.imgNews.setLayoutParams(layoutParams);
-				holder.imgNews
-						.setOnClickListener(new OnItemClickAction(holder));
-
+				holder.imgNews.setLayoutParams(layoutParams);				
 				holder.labTitle = (TextView) convertView
 						.findViewById(R.id.lab_title_item_list_fit);
 				holder.tagsPanel = (LinearLayout) convertView
@@ -244,6 +244,7 @@ public class FitNewsActivity extends ListActivity {
 
 			public OnItemClickAction(ViewHolder viewHolder) {
 				holder = viewHolder;
+				
 			}
 
 			@Override
