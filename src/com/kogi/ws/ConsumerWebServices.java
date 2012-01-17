@@ -143,7 +143,8 @@ public class ConsumerWebServices {
 		}
 
 		ArrayList<FitItem> fitItems = new ArrayList<FitItem>();
-		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
+				"yyyy-mm-dd HH:mm:ss");
 
 		for (int i = 0; i < postItems.length(); i++) {
 
@@ -201,8 +202,10 @@ public class ConsumerWebServices {
 					}
 
 					fitItem.getUrlsImages().add(j, urlImageFull);
+					if (!urlImageFull.equals(""))
+						fitItem.getImages().add(j, null);
 				}
-				
+
 				// add fitItem to the list of fitItems
 				fitItems.add(fitItem);
 

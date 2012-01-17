@@ -41,15 +41,30 @@
         android:layout_height="fill_parent"
         android:layout_below="@+id/search_bar"
         android:clickable="true"
-        android:footerDividersEnabled="false">
+        android:footerDividersEnabled="false" >
     </com.kogi.fitnews.PullToRefreshListView>
 
-    <TextView
+    <LinearLayout
         android:id="@android:id/empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:gravity="center"
-        android:padding="5dp" />
+        android:visibility="invisible"
+        android:orientation="horizontal" >
+
+        <TextView
+            style="@style/msg_internet_connection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/message_no_connection" />
+
+        <Button
+            android:id="@+id/but_try_again"
+            style="@style/msg_internet_connection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/message_try_again" />
+    </LinearLayout>
 
 </RelativeLayout>

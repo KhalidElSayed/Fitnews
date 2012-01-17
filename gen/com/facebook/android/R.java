@@ -46,6 +46,7 @@ public final class R {
     }
     public static final class id {
         public static final int action_bar=0x7f070004;
+        public static final int but_try_again=0x7f07000e;
         public static final int img_item_detail=0x7f070002;
         public static final int img_new_item_list_fit=0x7f070008;
         public static final int img_search_action=0x7f07000d;
@@ -54,24 +55,24 @@ public final class R {
         public static final int lab_detail_item_list_fit=0x7f070009;
         public static final int lab_title_item_detail=0x7f070000;
         public static final int lab_title_item_list_fit=0x7f070007;
-        public static final int load_more_footer=0x7f070013;
-        public static final int load_more_progressBar=0x7f070014;
-        public static final int next_action=0x7f070012;
-        public static final int prev_action=0x7f07000e;
-        public static final int pull_to_refresh_header=0x7f070015;
-        public static final int pull_to_refresh_image=0x7f070017;
-        public static final int pull_to_refresh_progress=0x7f070016;
-        public static final int pull_to_refresh_text=0x7f070018;
-        public static final int pull_to_refresh_updated_at=0x7f070019;
+        public static final int load_more_footer=0x7f070014;
+        public static final int load_more_progressBar=0x7f070015;
+        public static final int next_action=0x7f070013;
+        public static final int prev_action=0x7f07000f;
+        public static final int pull_to_refresh_header=0x7f070016;
+        public static final int pull_to_refresh_image=0x7f070018;
+        public static final int pull_to_refresh_progress=0x7f070017;
+        public static final int pull_to_refresh_text=0x7f070019;
+        public static final int pull_to_refresh_updated_at=0x7f07001a;
         public static final int root_fit_news_item_list=0x7f070005;
-        public static final int save_pic_action=0x7f07000f;
+        public static final int save_pic_action=0x7f070010;
         public static final int search_bar=0x7f07000b;
-        public static final int share_facebook_action=0x7f070010;
-        public static final int share_twetter_action=0x7f070011;
+        public static final int share_facebook_action=0x7f070011;
+        public static final int share_twetter_action=0x7f070012;
         public static final int tags_panel=0x7f07000a;
         public static final int top_line=0x7f070006;
         public static final int txt_search=0x7f07000c;
-        public static final int webview=0x7f07001a;
+        public static final int webview=0x7f07001b;
     }
     public static final class layout {
         public static final int detail_item_fit=0x7f030000;
@@ -87,10 +88,12 @@ public final class R {
         public static final int error_rest_full_service=0x7f050003;
         public static final int hello=0x7f050000;
         public static final int load_more_post=0x7f050009;
+        public static final int message_no_connection=0x7f05000a;
         public static final int message_to_empty_fit_list=0x7f050002;
-        public static final int message_to_network_problem=0x7f05000a;
+        public static final int message_to_network_problem=0x7f05000e;
         public static final int message_to_next_action=0x7f05000c;
         public static final int message_to_previous_action=0x7f05000b;
+        public static final int message_try_again=0x7f05000d;
         public static final int pull_to_refresh_pull_label=0x7f050004;
         public static final int pull_to_refresh_refreshing_label=0x7f050006;
         public static final int pull_to_refresh_release_label=0x7f050005;
@@ -102,6 +105,7 @@ public final class R {
         public static final int lab_detail_fit_news=0x7f060002;
         public static final int lab_tags_fit_news=0x7f060000;
         public static final int lab_title_fit_news=0x7f060001;
+        public static final int msg_internet_connection=0x7f060004;
     }
     public static final class styleable {
         /** Attributes that can be used with a HelloGallery.

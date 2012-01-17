@@ -3,6 +3,8 @@ package com.kogi.fitnews;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.facebook.android.Facebook;
 import com.facebook.android.FacebookError;
@@ -19,12 +21,13 @@ import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.text.Html;
+import android.text.Html.ImageGetter;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -165,7 +168,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 	}
 
 	@Override
-	protected void onDestroy() {
+	protected void onStop() {
 		// clean the images load in the memory
 		ArrayList<FitItem> fitItems = MyApplication.getInstance()
 				.getFitItemsList();
@@ -173,7 +176,7 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			if (!item.getImages().isEmpty())
 				item.getImages().clear();
 		}
-		super.onDestroy();
+		super.onStop();
 	}
 
 	/**
@@ -197,12 +200,14 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 					if (bmp != null) {
 						Bitmap bmpResized = mDecoderImages.getBitmapReSize(bmp,
 								width);
+						// TODO corregir problema index aki
 						item.getImages().add(index, bmpResized);
 						finished = true;
 					} else {
 						intentos++;
-						if (intentos > 2)
-							item.getImages().add(index, null);
+						/*
+						 * if (intentos > 2) item.getImages().add(index, null);
+						 */
 					}
 
 				}
@@ -260,8 +265,10 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		SimpleDateFormat format = new SimpleDateFormat("hh:mm a E, d'th' MMMMM");
 		String stringDate = format.format(mFItItem.getDate());
 		mLabDate.setText(stringDate);
+		String content = mFItItem.getContent();
+		String clean = content.replaceAll("<\\s*img[^>]*(.*?)\\s*/\\s*>", " ");
+		mLabContent.setText(Html.fromHtml(clean));
 
-		mLabContent.setText(Html.fromHtml(mFItItem.getContent()));
 	}
 
 	private void setFitItemImageWhenItNoHasImages() {
@@ -359,8 +366,6 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 			return;
 		}
 
-		// TODO cambiar la dependencia al obtener la imagen con la posicion
-		// para save pic action
 		bmp = mFItItem.getImages().get((Integer) mImageView.getTag());
 		String urlImage = mFItItem.getUrlsImages().get(
 				(Integer) mImageView.getTag());
@@ -515,17 +520,13 @@ public class ItemDetailActivity extends Activity implements OnClickListener {
 		Bundle params = new Bundle();
 		params.putString("caption", getString(R.string.app_name));
 		params.putString("description", mFItItem.getUrlContent());
+		params.putString("name", "Via FitNews by android");
+
 		int index = (Integer) mImageView.getTag();
-		if (index == -1) {
-			params.putString("picture",
-					"http://www.clker.com/embed-24011-1024011-small.html");
-		} else {
-			//TODO validar el indice para evitar exception
+		if (index >= 0) {
 			params.putString("picture",
 					mFItItem.getUrlsImages().get((Integer) mImageView.getTag()));
 		}
-
-		params.putString("name", "Via FitNews by android");
 
 		MyApplication
 				.getInstance()

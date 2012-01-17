@@ -350,7 +350,7 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
 					visibleItemCount, totalItemCount);
 		}
 
-		// no need a list to load more items
+		// if need a list to load more items
 		if (mOnLoadMoreListener != null) {
 
 			if (visibleItemCount == totalItemCount) {

@@ -11,8 +11,10 @@
     <string name="pull_to_refresh_tap_label">Tap to refresh...</string>
     <string name="text_hint_search">Search posts</string>
     <string name="load_more_post">Loading more...</string>
-    <string name="message_to_network_problem">There is a problem with your internet connection, try later!</string>
+    <string name="message_no_connection">No connection</string>
     <string name="message_to_previous_action">You are in the beginning</string>
     <string name="message_to_next_action">You are in the end</string>
+    <string name="message_try_again">Try again</string>
+    <string name="message_to_network_problem">There is a prolem with your internet connection, try again !</string>
 
 </resources>
